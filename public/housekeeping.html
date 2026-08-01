@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Housekeeping — Beam Veda</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #333; }
+    .header { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .header .logo { display: flex; align-items: center; gap: 0.6rem; }
+    .header .logo-icon { width: 36px; height: 36px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header .logo-text { font-size: 1.25rem; font-weight: 700; }
+    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 1.2rem; color: #1e3a5f; margin-bottom: 1rem; }
+    .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 0.95rem; color: #555; }
+    .setting-control { display: flex; align-items: center; gap: 0.5rem; }
+    input[type="number"] { width: 80px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; }
+    input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+    .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-secondary { background: #e5e7eb; color: #333; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .stat-box { background: #f8fafc; border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-box .stat-value { font-size: 1.5rem; font-weight: 700; color: #1e3a5f; }
+    .stat-box .stat-label { font-size: 0.8rem; color: #6b7280; margin-top: 0.3rem; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; }
+    .modal h3 { font-size: 1.1rem; color: #1e3a5f; margin-bottom: 1rem; }
+    .modal p { font-size: 0.9rem; color: #555; margin-bottom: 1rem; }
+    .modal .actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .preview-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .preview-table th, .preview-table td { padding: 0.6rem; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+    .preview-table th { background: #f8fafc; color: #6b7280; font-weight: 600; }
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1e3a5f; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; z-index: 2000; }
+    .toast.show { opacity: 1; }
+    .footer { text-align: center; padding: 1.5rem 1rem; font-size: 0.75rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><img src="icon.svg" width="28" height="28" alt="Beam Veda" /></div>
+      <div class="logo-text">Beam Veda — Housekeeping</div>
+    </div>
+    <a href="/" style="color:white;text-decoration:none;font-size:0.9rem;">← Back to App</a>
+  </div>
+  <div class="container">
+    <div class="card">
+      <h2>📊 Overview</h2>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-box"><div class="stat-value" id="totalInward">—</div><div class="stat-label">Total Inward Entries</div></div>
+        <div class="stat-box"><div class="stat-value" id="totalOutward">—</div><div class="stat-label">Total Outward Shipments</div></div>
+        <div class="stat-box"><div class="stat-value" id="purgeAllCount">—</div><div class="stat-label">Purge-All Candidates</div></div>
+        <div class="stat-box"><div class="stat-value" id="purgeCompletedCount">—</div><div class="stat-label">Purge-Completed Candidates</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>⚙️ Purge Settings</h2>
+      <div class="setting-row">
+        <div class="setting-label">Purge all records older than (days)</div>
+        <div class="setting-control">
+          <input type="number" id="purgeAllDays" min="1" />
+          <input type="checkbox" id="purgeAllEnabled" />
+          <span style="font-size:0.8rem;color:#6b7280;">Enable</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Purge completed entries older than (days)</div>
+        <div class="setting-control">
+          <input type="number" id="purgeCompletedDays" min="1" />
+          <input type="checkbox" id="purgeCompletedEnabled" />
+          <span style="font-size:0.8rem;color:#6b7280;">Enable</span>
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        <button class="btn btn-secondary" onclick="loadPreview()">Preview Purge</button>
+      </div>
+    </div>
+    <div class="card" id="previewCard" style="display:none;">
+      <h2>🔍 Purge Preview</h2>
+      <table class="preview-table">
+        <thead><tr><th>Mode</th><th>Records</th><th>Photos</th><th>Cutoff Date</th><th>Enabled</th></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+        <button class="btn btn-danger" onclick="showPurgeModal('all')">Purge All Old</button>
+        <button class="btn btn-danger" onclick="showPurgeModal('completed')">Purge Completed</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="purgeModal">
+    <div class="modal">
+      <h3 id="purgeModalTitle">Confirm Purge</h3>
+      <p id="purgeModalText">Are you sure? This action cannot be undone.</p>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="closePurgeModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmPurgeBtn">Confirm Purge</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="footer">Copyright © Beam Veda Management</div>
+  <script>
+    let currentPurgeMode = null;
+    async function api(path, opts = {}) {
+      const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }, credentials: 'same-origin' });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Request failed'); }
+      return res.json();
+    }
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    async function loadStats() {
+      try {
+        const stats = await api('/api/housekeeping/stats');
+        document.getElementById('totalInward').textContent = stats.totals.inwardEntries;
+        document.getElementById('totalOutward').textContent = stats.totals.outwardShipments;
+        document.getElementById('purgeAllCount').textContent = stats.purgePreview.all.count;
+        document.getElementById('purgeCompletedCount').textContent = stats.purgePreview.completed.count;
+        document.getElementById('purgeAllDays').value = stats.settings.purgeAllDays;
+        document.getElementById('purgeCompletedDays').value = stats.settings.purgeCompletedDays;
+        document.getElementById('purgeAllEnabled').checked = stats.settings.purgeAllEnabled;
+        document.getElementById('purgeCompletedEnabled').checked = stats.settings.purgeCompletedEnabled;
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+    async function saveSettings() {
+      try {
+        await api('/api/housekeeping/settings', { method: 'PUT', body: JSON.stringify({
+          purgeAllDays: parseInt(document.getElementById('purgeAllDays').value, 10),
+          purgeCompletedDays: parseInt(document.getElementById('purgeCompletedDays').value, 10),
+          purgeAllEnabled: document.getElementById('purgeAllEnabled').checked,
+          purgeCompletedEnabled: document.getElementById('purgeCompletedEnabled').checked,
+        }) });
+        showToast('Settings saved');
+        loadStats();
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+    async function loadPreview() {
+      try {
+        const preview = await api('/api/housekeeping/preview');
+        const body = document.getElementById('previewBody');
+        body.innerHTML = '';
+        const rows = [
+          ['All Old Records', preview.all.count, preview.all.photos, preview.all.cutoffDate, preview.all.enabled],
+          ['Completed Entries', preview.completed.count, preview.completed.photos, preview.completed.cutoffDate, preview.completed.enabled],
+        ];
+        for (const [mode, count, photos, cutoff, enabled] of rows) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + mode + '</td><td>' + count + '</td><td>' + photos + '</td><td>' + cutoff.split('T')[0] + '</td><td>' + (enabled ? '✅' : '❌') + '</td>';
+          body.appendChild(tr);
+        }
+        document.getElementById('previewCard').style.display = 'block';
+        showToast('Preview refreshed');
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+    function showPurgeModal(mode) {
+      currentPurgeMode = mode;
+      document.getElementById('purgeModalTitle').textContent = mode === 'all' ? 'Purge All Old Records' : 'Purge Completed Entries';
+      document.getElementById('purgeModalText').textContent = 'This will permanently delete the records and their photos. This action cannot be undone.';
+      document.getElementById('purgeModal').classList.add('show');
+    }
+    function closePurgeModal() { document.getElementById('purgeModal').classList.remove('show'); currentPurgeMode = null; }
+    document.getElementById('confirmPurgeBtn').addEventListener('click', async () => {
+      if (!currentPurgeMode) return;
+      closePurgeModal();
+      try {
+        const result = await api('/api/housekeeping/purge', { method: 'POST', body: JSON.stringify({ mode: currentPurgeMode }) });
+        showToast('Purged ' + result.purged + ' entries, ' + result.photosDeleted + ' photos deleted.');
+        loadStats();
+      } catch (e) { showToast('Error: ' + e.message); }
+    });
+    loadStats();
+  </script>
+</body>
+</html>

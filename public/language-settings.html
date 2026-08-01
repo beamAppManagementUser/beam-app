@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Language Settings — Beam Veda</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #333; }
+    .header { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .header .logo { display: flex; align-items: center; gap: 0.6rem; }
+    .header .logo-icon { width: 36px; height: 36px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header .logo-text { font-size: 1.25rem; font-weight: 700; }
+    .container { max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 1.2rem; color: #1e3a5f; margin-bottom: 1rem; }
+    .lang-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; }
+    .lang-option { border: 2px solid #e5e7eb; border-radius: 8px; padding: 1rem; cursor: pointer; text-align: center; transition: border-color 0.2s; }
+    .lang-option:hover { border-color: #2563eb; }
+    .lang-option.selected { border-color: #2563eb; background: #eff6ff; }
+    .lang-option .lang-native { font-size: 1rem; font-weight: 600; }
+    .lang-option .lang-english { font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem; }
+    .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; margin-top: 1rem; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .current-lang { font-size: 0.9rem; color: #555; margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 8px; }
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1e3a5f; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; z-index: 2000; }
+    .toast.show { opacity: 1; }
+    .footer { text-align: center; padding: 1.5rem 1rem; font-size: 0.75rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><img src="icon.svg" width="28" height="28" alt="Beam Veda" /></div>
+      <div class="logo-text">Beam Veda — Language Settings</div>
+    </div>
+    <a href="/" style="color:white;text-decoration:none;font-size:0.9rem;">← Back to App</a>
+  </div>
+  <div class="container">
+    <div class="card">
+      <h2>🌐 Language Settings</h2>
+      <div class="current-lang" id="currentLang">Current language: Loading...</div>
+      <div class="lang-grid" id="langGrid"></div>
+      <button class="btn btn-primary" onclick="saveLanguage()">Save Preference</button>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="footer">Copyright © Beam Veda Management</div>
+  <script>
+    const LANGUAGES = [
+      { code: 'en', nativeName: 'English', name: 'English' },
+      { code: 'hi', nativeName: 'हिन्दी', name: 'Hindi' },
+      { code: 'hi-mixed', nativeName: 'हिन्दी (Mixed)', name: 'Hindi (Mixed)' },
+    ];
+    let selectedLanguage = null;
+    async function api(path, opts = {}) {
+      const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }, credentials: 'same-origin' });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Request failed'); }
+      return res.json();
+    }
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    async function loadCurrentLanguage() {
+      try {
+        const data = await api('/api/users/me/language');
+        selectedLanguage = data.language;
+        document.getElementById('currentLang').textContent = 'Current language: ' + data.language + (data.personalPreference ? ' (your preference)' : ' (company default)');
+        renderGrid();
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+    function renderGrid() {
+      const grid = document.getElementById('langGrid');
+      grid.innerHTML = '';
+      for (const lang of LANGUAGES) {
+        const div = document.createElement('div');
+        div.className = 'lang-option' + (selectedLanguage === lang.code ? ' selected' : '');
+        div.innerHTML = '<div class="lang-native">' + lang.nativeName + '</div><div class="lang-english">' + lang.name + '</div>';
+        div.onclick = function() { selectedLanguage = lang.code; renderGrid(); };
+        grid.appendChild(div);
+      }
+    }
+    async function saveLanguage() {
+      if (!selectedLanguage) return;
+      try {
+        await api('/api/users/me/language', { method: 'PUT', body: JSON.stringify({ language: selectedLanguage }) });
+        showToast('Language saved');
+      } catch (e) { showToast('Error: ' + e.message); }
+    }
+    loadCurrentLanguage();
+  </script>
+</body>
+</html>

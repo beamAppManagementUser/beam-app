@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beam Veda</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-title" content="Beam Veda" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #333; }
+    .header { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .header .logo { display: flex; align-items: center; gap: 0.6rem; }
+    .header .logo-icon { width: 36px; height: 36px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header .logo-text { font-size: 1.25rem; font-weight: 700; }
+    .login-container { max-width: 400px; margin: 60px auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .login-container h1 { font-size: 1.5rem; color: #1e3a5f; margin-bottom: 0.3rem; }
+    .login-container .tagline { font-size: 0.85rem; color: #6b7280; margin-bottom: 1.5rem; }
+    label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #555; }
+    input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+    button { width: 100%; padding: 0.75rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    .error { color: #dc2626; font-size: 0.85rem; margin-bottom: 1rem; }
+    .info { color: #6b7280; font-size: 0.85rem; margin-top: 1rem; text-align: center; }
+    .footer { text-align: center; padding: 1.5rem 1rem; font-size: 0.75rem; color: #6b7280; }
+    .footer a { color: #2563eb; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><img src="icon.svg" width="28" height="28" alt="Beam Veda" /></div>
+      <div class="logo-text">Beam Veda</div>
+    </div>
+  </div>
+  <div class="login-container">
+    <h1>Beam Veda</h1>
+    <div class="tagline">Beam Pipe Stock Management</div>
+    <div id="app">
+      <p style="color:#6b7280; font-size:0.9rem;">
+        Replace this file with your actual frontend from the <code>public/</code> directory of your original repo.
+        All API endpoints are live and ready at <code>/api/*</code>.
+      </p>
+    </div>
+  </div>
+  <div class="footer">
+    <div>Copyright © Beam Veda Management</div>
+    <div style="margin-top:0.3rem;">For support: <a href="mailto:beamveda@gmail.com">beamveda@gmail.com</a></div>
+  </div>
+  <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }
+    console.log('Beam Veda — Workers edition');
+  </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branding Preview — Beam Veda</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #333; }
+    .header { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .header .logo { display: flex; align-items: center; gap: 0.6rem; }
+    .header .logo-icon { width: 36px; height: 36px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header .logo-text { font-size: 1.25rem; font-weight: 700; }
+    .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 1.2rem; color: #1e3a5f; margin-bottom: 1rem; }
+    .phone-mockup { width: 320px; margin: 0 auto; border: 3px solid #1e3a5f; border-radius: 24px; overflow: hidden; background: white; }
+    .phone-header { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white; padding: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .phone-header img { width: 28px; height: 28px; background: white; border-radius: 6px; padding: 2px; }
+    .phone-header .title { font-size: 1rem; font-weight: 700; }
+    .phone-body { padding: 1rem; min-height: 400px; }
+    .phone-label { font-size: 0.75rem; color: #6b7280; margin: 1rem 0 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .phone-input { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.75rem; }
+    .phone-btn { width: 100%; padding: 0.6rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+    .phone-footer { text-align: center; padding: 0.75rem; font-size: 0.7rem; color: #6b7280; border-top: 1px solid #f0f0f0; }
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .footer { text-align: center; padding: 1.5rem 1rem; font-size: 0.75rem; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><img src="icon.svg" width="28" height="28" alt="Beam Veda" /></div>
+      <div class="logo-text">Beam Veda — Branding Preview</div>
+    </div>
+    <a href="/" style="color:white;text-decoration:none;font-size:0.9rem;">← Back to App</a>
+  </div>
+  <div class="container">
+    <div class="card">
+      <h2>🎨 Branding Preview</h2>
+      <p style="color:#6b7280;font-size:0.9rem;margin-bottom:1.5rem;">This page shows how the Beam Veda branding appears across different screens of the app.</p>
+      <div class="preview-grid">
+        <div>
+          <div class="phone-label">1. Login Page</div>
+          <div class="phone-mockup">
+            <div class="phone-header">
+              <img src="icon.svg" alt="Beam Veda" />
+              <div class="title">Beam Veda</div>
+            </div>
+            <div class="phone-body">
+              <div style="font-size:1.1rem;font-weight:600;color:#1e3a5f;margin-bottom:0.3rem;">Beam Veda</div>
+              <div style="font-size:0.8rem;color:#6b7280;margin-bottom:1rem;">Beam Pipe Stock Management</div>
+              <input class="phone-input" placeholder="User ID" readonly />
+              <input class="phone-input" type="password" placeholder="Password" readonly />
+              <button class="phone-btn">Login</button>
+            </div>
+            <div class="phone-footer">Copyright © Beam Veda Management</div>
+          </div>
+        </div>
+        <div>
+          <div class="phone-label">2. Dashboard Header</div>
+          <div class="phone-mockup">
+            <div class="phone-header">
+              <img src="icon.svg" alt="Beam Veda" />
+              <div class="title">Beam Veda</div>
+            </div>
+            <div class="phone-body">
+              <div style="font-size:0.9rem;color:#333;margin-bottom:0.5rem;">Dashboard</div>
+              <div style="background:#f0f2f5;border-radius:8px;padding:1rem;margin-bottom:0.5rem;font-size:0.85rem;">Inward Entries: 42</div>
+              <div style="background:#f0f2f5;border-radius:8px;padding:1rem;font-size:0.85rem;">Outward Shipments: 18</div>
+            </div>
+            <div class="phone-footer">Copyright © Beam Veda Management</div>
+          </div>
+        </div>
+        <div>
+          <div class="phone-label">3. Root Admin Login</div>
+          <div class="phone-mockup">
+            <div class="phone-header">
+              <img src="icon.svg" alt="Beam Veda" />
+              <div class="title">Beam Veda</div>
+            </div>
+            <div class="phone-body">
+              <div style="font-size:1.1rem;font-weight:600;color:#1e3a5f;margin-bottom:0.3rem;">Beam Veda</div>
+              <div style="font-size:0.8rem;color:#6b7280;margin-bottom:1rem;">Beam Pipe Stock Management</div>
+              <input class="phone-input" placeholder="User ID" value="Admin" readonly />
+              <input class="phone-input" type="password" placeholder="Password" readonly />
+              <button class="phone-btn">Login</button>
+              <div style="text-align:center;margin-top:0.75rem;font-size:0.8rem;color:#2563eb;cursor:pointer;">Forgot Password?</div>
+            </div>
+            <div class="phone-footer">Copyright © Beam Veda Management</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">Copyright © Beam Veda Management</div>
+</body>
+</html>
