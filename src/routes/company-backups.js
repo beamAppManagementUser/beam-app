@@ -13,12 +13,14 @@ import { restoreCompanyBackup } from '../services/restore.js';
 
 const companyBackups = new Hono();
 
+// GET /api/company-backups
 companyBackups.get('/', requireAdmin, async (c) => {
   const scope = effectiveCompanyScope(c);
   if (scope.all) return c.json(await listAllCompanyBackups(c.env));
   return c.json(await listCompanyBackups(c.env, scope.companyId));
 });
 
+// POST /api/company-backups/run
 companyBackups.post('/run', requireAdmin, async (c) => {
   const scope = effectiveCompanyScope(c);
   if (scope.all) return c.json({ error: 'Select a specific company before running a company backup.' }, 400);
@@ -30,6 +32,7 @@ companyBackups.post('/run', requireAdmin, async (c) => {
   }
 });
 
+// GET /api/company-backups/:filename/download
 companyBackups.get('/:filename/download', requireAdmin, async (c) => {
   const scope = effectiveCompanyScope(c);
   let companyId = scope.companyId;
@@ -40,7 +43,7 @@ companyBackups.get('/:filename/download', requireAdmin, async (c) => {
   const obj = await getCompanyBackupFile(c.env, companyId, c.req.param('filename'));
   if (!obj) return c.json({ error: 'Backup not found.' }, 404);
   const safe = c.req.param('filename').replace(/[^a-zA-Z0-9._-]/g, '');
-  return new Response(obj.body, {
+  return new Response(await obj.text(), {
     headers: {
       'Content-Type': 'application/json',
       'Content-Disposition': `attachment; filename="${safe}"`,
@@ -48,6 +51,7 @@ companyBackups.get('/:filename/download', requireAdmin, async (c) => {
   });
 });
 
+// DELETE /api/company-backups/:filename
 companyBackups.delete('/:filename', requireAdmin, async (c) => {
   const scope = effectiveCompanyScope(c);
   let companyId = scope.companyId;
@@ -59,6 +63,7 @@ companyBackups.delete('/:filename', requireAdmin, async (c) => {
   return c.json({ ok: true });
 });
 
+// POST /api/company-backups/cleanup
 companyBackups.post('/cleanup', requireAdmin, async (c) => {
   const scope = effectiveCompanyScope(c);
   if (scope.all) return c.json({ error: 'Select a specific company before cleaning up backups.' }, 400);
@@ -69,6 +74,7 @@ companyBackups.post('/cleanup', requireAdmin, async (c) => {
   return c.json({ ok: true, removed });
 });
 
+// POST /api/company-backups/:filename/restore — restore this company from a backup
 companyBackups.post('/:filename/restore', requireAdmin, async (c) => {
   const scope = effectiveCompanyScope(c);
   if (scope.all) return c.json({ error: 'Select a specific company before restoring a backup.' }, 400);
