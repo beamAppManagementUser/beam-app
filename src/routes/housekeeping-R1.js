@@ -1,29 +1,22 @@
-// Housekeeping routes — purge management + settings + photo settings
+// Housekeeping routes — purge management + settings
 import { Hono } from 'hono';
 import { requireAdmin, requireRoot, effectiveCompanyScope } from '../middleware/auth.js';
 import { getSettings, updateSettings, previewPurge, executePurge } from '../services/housekeeping.js';
-import { getPhotoSettings } from '../utils/uploads.js';
 
 const housekeeping = new Hono();
 
 housekeeping.get('/settings', requireAdmin, async (c) => {
   const settings = await getSettings(c.env);
-  const photoSettings = await getPhotoSettings(c.env);
   return c.json({
     purgeAllDays: settings.purge_all_days,
     purgeCompletedDays: settings.purge_completed_days,
     purgeAllEnabled: !!settings.purge_all_enabled,
     purgeCompletedEnabled: !!settings.purge_completed_enabled,
-    photoUploadsEnabled: photoSettings.enabled,
-    maxPhotoSizeKb: photoSettings.maxPhotoSizeKb,
-    photoCount: photoSettings.photoCount,
-    photoLimit: photoSettings.photoLimit,
-    photosRemaining: photoSettings.remaining,
   });
 });
 
 housekeeping.put('/settings', requireRoot, async (c) => {
-  const { purgeAllDays, purgeCompletedDays, purgeAllEnabled, purgeCompletedEnabled, photoUploadsEnabled, maxPhotoSizeKb } = await c.req.json();
+  const { purgeAllDays, purgeCompletedDays, purgeAllEnabled, purgeCompletedEnabled } = await c.req.json();
   const updates = {};
   if (purgeAllDays !== undefined) {
     const days = parseInt(purgeAllDays, 10);
@@ -37,26 +30,14 @@ housekeeping.put('/settings', requireRoot, async (c) => {
   }
   if (purgeAllEnabled !== undefined) updates.purge_all_enabled = purgeAllEnabled ? 1 : 0;
   if (purgeCompletedEnabled !== undefined) updates.purge_completed_enabled = purgeCompletedEnabled ? 1 : 0;
-  if (photoUploadsEnabled !== undefined) updates.photo_uploads_enabled = photoUploadsEnabled ? 1 : 0;
-  if (maxPhotoSizeKb !== undefined) {
-    const kb = parseInt(maxPhotoSizeKb, 10);
-    if (isNaN(kb) || kb < 10 || kb > 500) return c.json({ error: 'maxPhotoSizeKb must be between 10 and 500.' }, 400);
-    updates.max_photo_size_kb = kb;
-  }
   const session = c.get('session');
   await updateSettings(c.env, updates, session.user.id);
   const settings = await getSettings(c.env);
-  const photoSettings = await getPhotoSettings(c.env);
   return c.json({
     purgeAllDays: settings.purge_all_days,
     purgeCompletedDays: settings.purge_completed_days,
     purgeAllEnabled: !!settings.purge_all_enabled,
     purgeCompletedEnabled: !!settings.purge_completed_enabled,
-    photoUploadsEnabled: photoSettings.enabled,
-    maxPhotoSizeKb: photoSettings.maxPhotoSizeKb,
-    photoCount: photoSettings.photoCount,
-    photoLimit: photoSettings.photoLimit,
-    photosRemaining: photoSettings.remaining,
   });
 });
 
@@ -85,19 +66,13 @@ housekeeping.get('/stats', requireAdmin, async (c) => {
   const companyId = scope.all ? null : scope.companyId;
   const settings = await getSettings(c.env);
   const preview = await previewPurge(c.env, companyId);
-  const photoSettings = await getPhotoSettings(c.env);
   const companyFilter = companyId ? 'WHERE company_id = ?' : '';
   const params = companyId ? [companyId] : [];
   const totalEntries = await c.env.DB.prepare(`SELECT COUNT(*) AS c FROM inward_entries ${companyFilter}`).bind(...params).first();
   const totalShipments = await c.env.DB.prepare(`SELECT COUNT(*) AS c FROM outward_shipments ${companyFilter}`).bind(...params).first();
   return c.json({
     scope: scope.all ? 'all' : 'company', companyId: scope.companyId,
-    settings: {
-      purgeAllDays: settings.purge_all_days, purgeCompletedDays: settings.purge_completed_days,
-      purgeAllEnabled: !!settings.purge_all_enabled, purgeCompletedEnabled: !!settings.purge_completed_enabled,
-      photoUploadsEnabled: photoSettings.enabled, maxPhotoSizeKb: photoSettings.maxPhotoSizeKb,
-      photoCount: photoSettings.photoCount, photoLimit: photoSettings.photoLimit, photosRemaining: photoSettings.remaining,
-    },
+    settings: { purgeAllDays: settings.purge_all_days, purgeCompletedDays: settings.purge_completed_days, purgeAllEnabled: !!settings.purge_all_enabled, purgeCompletedEnabled: !!settings.purge_completed_enabled },
     totals: { inwardEntries: totalEntries.c, outwardShipments: totalShipments.c },
     purgePreview: preview,
   });

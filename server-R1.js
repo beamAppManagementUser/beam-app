@@ -11,6 +11,7 @@ import { reportsRoutes } from './src/routes/reports.js';
 import { backupsRoutes } from './src/routes/backups.js';
 import { companyBackupsRoutes } from './src/routes/company-backups.js';
 import { housekeepingRoutes } from './src/routes/housekeeping.js';
+import { scheduledBackups } from './src/services/backup.js';
 import { scheduledPurge } from './src/services/housekeeping.js';
 import { cleanupExpiredSessions } from './src/middleware/session.js';
 
@@ -58,6 +59,12 @@ app.get('*', (c) => {
 export default {
   ...app,
   scheduled: async (event, env) => {
+    if (event.cron === '0 2 * * 0') {
+      await scheduledBackups(event, env);
+    }
+    if (event.cron === '0 3 * * 0') {
+      await scheduledBackups(event, env);
+    }
     if (event.cron === '0 4 * * *') {
       await scheduledPurge(env);
       await cleanupExpiredSessions(env);

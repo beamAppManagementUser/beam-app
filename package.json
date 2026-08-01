@@ -1,14 +1,14 @@
 {
   "name": "beam-veda",
   "version": "1.0.0",
-  "description": "Multi-tenant beam pipe stock management app (Workers + D1)",
+  "description": "Multi-tenant beam pipe stock management app (Workers + D1, no R2 needed)",
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "reset-password": "node scripts/reset-password.js",
-    "db:migrate": "wrangler d1 execute beam-app-db --file=./migrations/0001_init.sql && wrangler d1 execute beam-app-db --file=./migrations/0002_seed_root.sql && wrangler d1 execute beam-app-db --file=./migrations/0003_housekeeping.sql && wrangler d1 execute beam-app-db --file=./migrations/0004_languages.sql && wrangler d1 execute beam-app-db --file=./migrations/0005_sessions.sql",
-    "db:remote-migrate": "wrangler d1 execute beam-app-db --remote --file=./migrations/0001_init.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0002_seed_root.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0003_housekeeping.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0004_languages.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0005_sessions.sql"
+    "db:migrate": "wrangler d1 execute beam-app-db --file=./migrations/0001_init.sql && wrangler d1 execute beam-app-db --file=./migrations/0002_seed_root.sql && wrangler d1 execute beam-app-db --file=./migrations/0003_housekeeping.sql && wrangler d1 execute beam-app-db --file=./migrations/0004_languages.sql && wrangler d1 execute beam-app-db --file=./migrations/0005_sessions.sql && wrangler d1 execute beam-app-db --file=./migrations/0006_photos_backups.sql",
+    "db:remote-migrate": "wrangler d1 execute beam-app-db --remote --file=./migrations/0001_init.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0002_seed_root.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0003_housekeeping.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0004_languages.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0005_sessions.sql && wrangler d1 execute beam-app-db --remote --file=./migrations/0006_photos_backups.sql"
   },
   "dependencies": {
     "hono": "^4.6.0",

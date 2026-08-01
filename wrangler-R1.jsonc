@@ -11,13 +11,19 @@
     {
       "binding": "DB",
       "database_name": "beam-app-db",
-      "database_id": "59fd47fd-8a73-4345-9c69-3447be088dc3"
+      "database_id": "YOUR_D1_DATABASE_ID"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKETS",
+      "bucket_name": "beam-app-uploads"
     }
   ],
   "vars": {
     "EMAIL_FROM_NAME": "Beam Veda"
   },
   "triggers": {
-    "crons": ["0 4 * * *"]
+    "crons": ["0 2 * * 0", "0 3 * * 0", "0 4 * * *"]
   }
 }

@@ -1,27 +1,11 @@
 // Backup service — replaces src/services/backup.js
-// Stores backups in D1 instead of R2 — no payment method needed
-// Hard limits: 10 system backups, 10 per company (oldest auto-deleted)
-
-const MAX_SYSTEM_BACKUPS = 10;
-const MAX_COMPANY_BACKUPS = 10;
+// Uses R2 for backup storage instead of local filesystem
+// Cron triggers replace node-cron
 
 function timestamp() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-}
-
-async function pruneOldBackups(env, type, companyId, maxBackups) {
-  const filter = type === 'system' ? "type = 'system'" : "type = 'company' AND company_id = ?";
-  const params = type === 'system' ? [] : [companyId];
-  const result = await env.DB.prepare(`SELECT id FROM backups WHERE ${filter} ORDER BY created_at DESC`).bind(...params).all();
-  const rows = result.results || [];
-  if (rows.length <= maxBackups) return 0;
-  const toDelete = rows.slice(maxBackups);
-  for (const row of toDelete) {
-    await env.DB.prepare('DELETE FROM backups WHERE id = ?').bind(row.id).run();
-  }
-  return toDelete.length;
 }
 
 export async function checkpointAndBackup(env) {
@@ -32,21 +16,24 @@ export async function checkpointAndBackup(env) {
     backup[table] = result.results || [];
   }
   const filename = `beamstock_${timestamp()}.json`;
-  const jsonStr = JSON.stringify(backup, null, 2);
-  const now = new Date().toISOString();
-  await env.DB.prepare('INSERT INTO backups (type, company_id, filename, data, size_bytes, created_at) VALUES (?, NULL, ?, ?, ?, ?)')
-    .bind('system', filename, jsonStr, jsonStr.length, now).run();
-  await pruneOldBackups(env, 'system', null, MAX_SYSTEM_BACKUPS);
+  await env.BUCKETS.put(`backups/system/${filename}`, JSON.stringify(backup, null, 2), {
+    httpMetadata: { contentType: 'application/json' },
+  });
   return filename;
 }
 
 export async function listBackups(env) {
-  const result = await env.DB.prepare("SELECT id, filename, size_bytes, created_at FROM backups WHERE type = 'system' ORDER BY created_at DESC").all();
-  return (result.results || []).map(r => ({ filename: r.filename, sizeBytes: r.size_bytes, createdAt: r.created_at }));
+  const list = await env.BUCKETS.list({ prefix: 'backups/system/' });
+  const items = [];
+  for (const obj of list.objects) {
+    items.push({ filename: obj.key.replace('backups/system/', ''), sizeBytes: obj.size, createdAt: obj.uploaded.toISOString() });
+  }
+  return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function deleteBackup(env, filename) {
-  await env.DB.prepare("DELETE FROM backups WHERE type = 'system' AND filename = ?").bind(filename).run();
+  const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+  await env.BUCKETS.delete(`backups/system/${safe}`);
 }
 
 export async function deleteBackupsOlderThan(env, days) {
@@ -54,18 +41,14 @@ export async function deleteBackupsOlderThan(env, days) {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
   let removed = 0;
   for (const b of backups) {
-    if (new Date(b.createdAt).getTime() < cutoff) {
-      await env.DB.prepare("DELETE FROM backups WHERE type = 'system' AND filename = ?").bind(b.filename).run();
-      removed++;
-    }
+    if (new Date(b.createdAt).getTime() < cutoff) { await deleteBackup(env, b.filename); removed++; }
   }
   return removed;
 }
 
 export async function getBackupFile(env, filename) {
-  const row = await env.DB.prepare("SELECT data FROM backups WHERE type = 'system' AND filename = ?").bind(filename).first();
-  if (!row) return null;
-  return { text: () => Promise.resolve(row.data) };
+  const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+  return await env.BUCKETS.get(`backups/system/${safe}`);
 }
 
 export async function generateCompanyBackup(env, companyId) {
@@ -80,21 +63,21 @@ export async function generateCompanyBackup(env, companyId) {
   const payload = {
     exportedAt: new Date().toISOString(),
     company: { slug: company.slug, name: company.name, contact: company.contact },
-    note: "This export contains this company's inward entries, outward shipments, lookup lists, and audit history only.",
+    note: "This export contains this company's inward entries, outward shipments, lookup lists, and audit history only. It does NOT include user accounts or passwords.",
     inwardEntries, outwardShipments, lookupFields, lookupValues, history: parsedHistory,
   };
   const filename = `company_${company.slug}_${timestamp()}.json`;
-  const jsonStr = JSON.stringify(payload, null, 2);
-  const now = new Date().toISOString();
-  await env.DB.prepare('INSERT INTO backups (type, company_id, filename, data, size_bytes, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind('company', companyId, filename, jsonStr, jsonStr.length, now).run();
-  await pruneOldBackups(env, 'company', companyId, MAX_COMPANY_BACKUPS);
+  await env.BUCKETS.put(`backups/companies/${companyId}/${filename}`, JSON.stringify(payload, null, 2), { httpMetadata: { contentType: 'application/json' } });
   return filename;
 }
 
 export async function listCompanyBackups(env, companyId) {
-  const result = await env.DB.prepare("SELECT id, filename, size_bytes, created_at FROM backups WHERE type = 'company' AND company_id = ? ORDER BY created_at DESC").bind(companyId).all();
-  return (result.results || []).map(r => ({ filename: r.filename, sizeBytes: r.size_bytes, createdAt: r.created_at }));
+  const list = await env.BUCKETS.list({ prefix: `backups/companies/${companyId}/` });
+  const items = [];
+  for (const obj of list.objects) {
+    items.push({ filename: obj.key.replace(`backups/companies/${companyId}/`, ''), sizeBytes: obj.size, createdAt: obj.uploaded.toISOString() });
+  }
+  return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function listAllCompanyBackups(env) {
@@ -108,13 +91,13 @@ export async function listAllCompanyBackups(env) {
 }
 
 export async function getCompanyBackupFile(env, companyId, filename) {
-  const row = await env.DB.prepare("SELECT data FROM backups WHERE type = 'company' AND company_id = ? AND filename = ?").bind(companyId, filename).first();
-  if (!row) return null;
-  return { text: () => Promise.resolve(row.data) };
+  const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+  return await env.BUCKETS.get(`backups/companies/${companyId}/${safe}`);
 }
 
 export async function deleteCompanyBackup(env, companyId, filename) {
-  await env.DB.prepare("DELETE FROM backups WHERE type = 'company' AND company_id = ? AND filename = ?").bind(companyId, filename).run();
+  const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+  await env.BUCKETS.delete(`backups/companies/${companyId}/${safe}`);
 }
 
 export async function deleteCompanyBackupsOlderThan(env, companyId, days) {
@@ -122,19 +105,36 @@ export async function deleteCompanyBackupsOlderThan(env, companyId, days) {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
   let removed = 0;
   for (const b of backups) {
-    if (new Date(b.createdAt).getTime() < cutoff) {
-      await deleteCompanyBackup(env, companyId, b.filename);
-      removed++;
-    }
+    if (new Date(b.createdAt).getTime() < cutoff) { await deleteCompanyBackup(env, companyId, b.filename); removed++; }
   }
   return removed;
 }
 
 export async function scheduledBackups(event, env) {
-  try {
-    const filename = await checkpointAndBackup(env);
-    console.log('System backup created:', filename);
-  } catch (e) {
-    console.error('System backup failed:', e);
+  if (event.cron === '0 2 * * 0') {
+    try {
+      const filename = await checkpointAndBackup(env);
+      console.log('System backup created:', filename);
+      const retentionDays = parseInt(env.BACKUP_RETENTION_DAYS || '0', 10);
+      if (retentionDays > 0) {
+        const removed = await deleteBackupsOlderThan(env, retentionDays);
+        if (removed) console.log(`Removed ${removed} system backup(s) older than ${retentionDays} days.`);
+      }
+    } catch (e) { console.error('System backup failed:', e); }
+  } else if (event.cron === '0 3 * * 0') {
+    try {
+      const companies = (await env.DB.prepare('SELECT id FROM companies WHERE active = 1').all()).results || [];
+      const retentionDays = parseInt(env.COMPANY_BACKUP_RETENTION_DAYS || '0', 10);
+      for (const c of companies) {
+        try {
+          const filename = await generateCompanyBackup(env, c.id);
+          console.log(`Company backup created for company ${c.id}:`, filename);
+          if (retentionDays > 0) {
+            const removed = await deleteCompanyBackupsOlderThan(env, c.id, retentionDays);
+            if (removed) console.log(`Removed ${removed} company backup(s) for company ${c.id} older than ${retentionDays} days.`);
+          }
+        } catch (e) { console.error(`Company backup failed for company ${c.id}:`, e); }
+      }
+    } catch (e) { console.error('Company backup scheduling run failed:', e); }
   }
 }
