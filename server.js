@@ -52,8 +52,27 @@ app.route('/api/company-backups', companyBackupsRoutes);
 app.route('/api/housekeeping', housekeepingRoutes);
 
 app.get('*', (c) => {
-  return c.env.ASSETS.fetch(c.req.raw);
+  if (c.env.ASSETS) {
+    return c.env.ASSETS.fetch(c.req.raw);
+  }
+  // Fallback when ASSETS binding is not available
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beam Veda</title>
+</head>
+<body style="font-family:system-ui,sans-serif;background:#f0f2f5;color:#333;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;">
+  <div style="max-width:400px;padding:2rem;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <h1 style="color:#1e3a5f;margin-bottom:0.3rem;">Beam Veda</h1>
+    <p style="color:#6b7280;font-size:0.85rem;margin-bottom:1rem;">Beam Pipe Stock Management</p>
+    <p style="font-size:0.9rem;">The API is live at <code>/api/*</code>. The frontend assets need to be deployed.</p>
+  </div>
+</body>
+</html>`);
 });
+
 
 export default {
   ...app,
