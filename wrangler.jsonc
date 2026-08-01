@@ -1,5 +1,6 @@
 {
-  "name": "app",
+	// wrangler.jsonc
+  "name": "beam-app",
   "main": "server.js",
   "compatibility_date": "2026-07-31",
   "compatibility_flags": ["nodejs_compat"],
