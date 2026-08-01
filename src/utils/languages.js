@@ -57,4 +57,7 @@ export function getEffectiveLanguage(user, company) {
   if (user.is_root) return DEFAULT_ADMIN_LANG;
   if (company) {
     if (user.role === 'admin') return company.admin_default_lang || DEFAULT_ADMIN_LANG;
-    return company.employee_default_lang || DEFAULT_EMPLOYEE_LA
+    return company.employee_default_lang || DEFAULT_EMPLOYEE_LANG;
+  }
+  return user.role === 'admin' ? DEFAULT_ADMIN_LANG : DEFAULT_EMPLOYEE_LANG;
+}
