@@ -32,7 +32,7 @@
     }
   },
   "vars": {
-    "EMAIL_FROM_NAME": "Beam Veda"
+    "EMAIL_FROM_NAME": "Beam Veda Support"
   },
   "triggers": {
     "crons": ["0 4 * * *"]
