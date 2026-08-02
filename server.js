@@ -18,25 +18,55 @@ const app = new Hono();
 
 app.use('*', logger());
 
+// CORS: simple origin echo. For production, replace with a whitelist check.
+const allowedOrigins = []; // e.g. ['https://example.com'] or load from env/bindings
 app.use('/api/*', cors({
-  origin: (origin) => origin || null,
+  origin: (origin) => {
+    if (!origin) return '';
+    if (allowedOrigins.length === 0) return origin;
+    return allowedOrigins.includes(origin) ? origin : '';
+  },
   credentials: true,
 }));
 
 app.onError((err, c) => {
+  // Log server-side; avoid leaking stack to clients in production
   console.error('Unhandled error:', err);
   return c.json({ error: 'An unexpected error occurred. Please try again.' }, 500);
 });
 
 app.get('/api/health', async (c) => {
   try {
-    const result = await c.env.DB.prepare('SELECT 1 AS ok').first();
-    if (result && result.ok === 1) {
+    if (!c.env || !c.env.DB) {
+      return c.json({ status: 'unhealthy', database: 'missing' }, 503);
+    }
+
+    const prepare = c.env.DB.prepare?.bind(c.env.DB);
+    let result = null;
+    if (prepare) {
+      try {
+        const stmt = prepare('SELECT 1 AS ok');
+        if (stmt && typeof stmt.first === 'function') {
+          result = await stmt.first();
+        } else {
+          // Fallback: try direct .first() pattern
+          result = await c.env.DB.prepare('SELECT 1 AS ok').first();
+        }
+      } catch (e) {
+        // swallow and let outer handler return unhealthy
+        console.error('DB health query failed:', e);
+      }
+    }
+
+    const ok = result && (result.ok === 1 || result.ok === '1');
+    if (ok) {
       return c.json({ status: 'healthy', database: 'connected', timestamp: new Date().toISOString() });
     }
+
     return c.json({ status: 'degraded', database: 'disconnected' }, 503);
   } catch (e) {
-    return c.json({ status: 'unhealthy', database: 'error', error: e.message }, 503);
+    console.error('Health check error:', e);
+    return c.json({ status: 'unhealthy', database: 'error', error: String(e) }, 503);
   }
 });
 
@@ -52,8 +82,9 @@ app.route('/api/company-backups', companyBackupsRoutes);
 app.route('/api/housekeeping', housekeepingRoutes);
 
 app.get('*', (c) => {
-  if (c.env.ASSETS) {
-    return c.env.ASSETS.fetch(c.req.raw);
+  if (c.env && c.env.ASSETS) {
+    const req = (c.req && c.req.raw) ? c.req.raw : c.req;
+    return c.env.ASSETS.fetch(req);
   }
   // Fallback when ASSETS binding is not available
   return c.html(`<!DOCTYPE html>
@@ -73,13 +104,12 @@ app.get('*', (c) => {
 </html>`);
 });
 
+// Export the Hono app as the default and scheduled as a named export.
+export default app;
 
-export default {
-  ...app,
-  scheduled: async (event, env) => {
-    if (event.cron === '0 4 * * *') {
-      await scheduledPurge(env);
-      await cleanupExpiredSessions(env);
-    }
-  },
+export const scheduled = async (event, env) => {
+  if (event.cron === '0 4 * * *') {
+    try { await scheduledPurge(env); } catch (err) { console.error('scheduledPurge error:', err); }
+    try { await cleanupExpiredSessions(env); } catch (err) { console.error('cleanupExpiredSessions error:', err); }
+  }
 };
