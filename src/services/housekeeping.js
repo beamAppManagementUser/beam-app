@@ -40,7 +40,7 @@ export async function previewPurge(env, companyId = null) {
   ).bind(allCutoff, ...params).first();
 
   const completedResult = await env.DB.prepare(
-    `SELECT e.id, e.number_of_pipes, e.company_id,
+    `SELECT e.id, e.number_of_pipes, e.company_id, e.has_photo,
        (SELECT COALESCE(SUM(number_of_pipes), 0) FROM outward_shipments WHERE inward_id = e.id) AS shipped
      FROM inward_entries e
      WHERE e.created_at < ? ${companyFilter}`
@@ -49,13 +49,13 @@ export async function previewPurge(env, companyId = null) {
   const completedRows = (completedResult.results || []).filter(r => r.shipped >= r.number_of_pipes);
 
   const allIds = await env.DB.prepare(
-    `SELECT id FROM inward_entries WHERE created_at < ? ${companyFilter}`
+    `SELECT id, has_photo FROM inward_entries WHERE created_at < ? ${companyFilter}`
   ).bind(allCutoff, ...params).all();
   const allPhotoCount = (allIds.results || []).filter(r => r.has_photo).length;
 
   return {
     all: { count: allResult.c, photos: allPhotoCount, cutoffDays: settings.purge_all_days, cutoffDate: allCutoff, enabled: !!settings.purge_all_enabled },
-    completed: { count: completedRows.length, photos: completedRows.filter(r => r.has_photo).length, cutoffDays: settings.purge_completed_days, cutoffDate: completedCutoff, enabled: !!settings.purge_completed_enabled },
+    completed: { count: completedRows.length, photos: completedRows.filter(r => r.has_photo).length, cutoffDays: settings.purge_completed_days, cutoffDate: completedCutoff, enabled: !!settings.purge_completed_enabled }
   };
 }
 

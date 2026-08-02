@@ -6,26 +6,34 @@ const MAX_PHOTOS = 5000;
 const DEFAULT_MAX_PHOTO_KB = 200;
 
 function getContentType(file) {
-  if (!file || file.length < 4) return 'image/jpeg';
-  if (file[0] === 0x52 && file[1] === 0x49 && file[2] === 0x46 && file[3] === 0x46) return 'image/webp';
-  if (file[0] === 0xFF && file[1] === 0xD8 && file[2] === 0xFF) return 'image/jpeg';
-  if (file[0] === 0x89 && file[1] === 0x50 && file[2] === 0x4E && file[3] === 0x47) return 'image/png';
+  if (!file || (file.byteLength || file.length) < 4) return 'image/jpeg';
+  const b0 = file[0], b1 = file[1], b2 = file[2], b3 = file[3];
+  if (b0 === 0x52 && b1 === 0x49 && b2 === 0x46 && b3 === 0x46) return 'image/webp';
+  if (b0 === 0xFF && b1 === 0xD8 && b2 === 0xFF) return 'image/jpeg';
+  if (b0 === 0x89 && b1 === 0x50 && b2 === 0x4E && b3 === 0x47) return 'image/png';
   return 'image/jpeg';
 }
 
 function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
+  // Accept either Uint8Array or ArrayBuffer
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   const chunkSize = 0x8000;
+  let binary = '';
   for (let i = 0; i < bytes.length; i += chunkSize) {
     const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode.apply(null, chunk);
+    // build string without using Function.apply on very large arrays
+    let chunkStr = '';
+    for (let j = 0; j < chunk.length; j++) {
+      chunkStr += String.fromCharCode(chunk[j]);
+    }
+    binary += chunkStr;
   }
-  return btoa(binary);
+  return typeof btoa === 'function' ? btoa(binary) : Buffer.from(binary, 'binary').toString('base64');
 }
 
 function base64ToArrayBuffer(base64) {
-  const binary = atob(base64);
+  // atob/btoa polyfill compatibility
+  const binary = typeof atob === 'function' ? atob(base64) : Buffer.from(base64, 'base64').toString('binary');
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
@@ -39,8 +47,9 @@ async function getSetting(env, key, defaultValue) {
 }
 
 async function checkPhotoLimit(env) {
-  const count = await env.DB.prepare('SELECT COUNT(*) AS c FROM photos').first();
-  if (count.c >= MAX_PHOTOS) {
+  const row = await env.DB.prepare('SELECT COUNT(*) AS c FROM photos').first();
+  const count = row?.c ?? 0;
+  if (count >= MAX_PHOTOS) {
     throw new Error(`Photo limit reached (${MAX_PHOTOS}). Delete old photos or purge old records to free up space.`);
   }
   const enabled = await getSetting(env, 'photo_uploads_enabled', '1');
@@ -50,28 +59,46 @@ async function checkPhotoLimit(env) {
 }
 
 export async function savePhoto(env, id, buffer) {
+  // buffer is expected as Uint8Array or ArrayBuffer
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   await checkPhotoLimit(env);
-  const contentType = getContentType(buffer);
+  const contentType = getContentType(bytes);
   const maxKb = parseInt(await getSetting(env, 'max_photo_size_kb', String(DEFAULT_MAX_PHOTO_KB)), 10);
-  const sizeKb = Math.ceil(buffer.length / 1024);
+  const sizeKb = Math.ceil((bytes.byteLength || bytes.length) / 1024);
   if (sizeKb > maxKb) {
     throw new Error(`Photo is ${sizeKb}KB — exceeds the ${maxKb}KB limit. The app should compress it before uploading.`);
   }
-  const base64 = arrayBufferToBase64(buffer);
+
+  const base64 = arrayBufferToBase64(bytes);
   const now = new Date().toISOString();
-  await env.DB.prepare('INSERT INTO photos (id, content_type, data, created_at) VALUES (?, ?, ?, ?)')
-    .bind(id, contentType, base64, now).run();
+  try {
+    await env.DB.prepare('INSERT INTO photos (id, content_type, data, created_at) VALUES (?, ?, ?, ?)')
+      .bind(id, contentType, base64, now).run();
+  } catch (e) {
+    console.error('savePhoto DB error:', e);
+    throw new Error('Failed to save photo.');
+  }
   return id;
 }
 
 export async function deletePhoto(env, id) {
-  await env.DB.prepare('DELETE FROM photos WHERE id = ?').bind(id).run();
+  try {
+    await env.DB.prepare('DELETE FROM photos WHERE id = ?').bind(id).run();
+  } catch (e) {
+    console.error('deletePhoto error:', e);
+    throw e;
+  }
 }
 
 export async function getPhoto(env, id) {
-  const row = await env.DB.prepare('SELECT content_type, data FROM photos WHERE id = ?').bind(id).first();
-  if (!row) return null;
-  return { contentType: row.content_type, buffer: base64ToArrayBuffer(row.data) };
+  try {
+    const row = await env.DB.prepare('SELECT content_type, data FROM photos WHERE id = ?').bind(id).first();
+    if (!row) return null;
+    return { contentType: row.content_type, buffer: base64ToArrayBuffer(row.data) };
+  } catch (e) {
+    console.error('getPhoto error:', e);
+    return null;
+  }
 }
 
 export function deviceInfoFromReq(c) {
@@ -86,7 +113,7 @@ export async function parseMultipart(c) {
     if (key !== 'photo' && typeof value === 'string') { body[key] = value; }
   }
   let fileBuffer = null;
-  if (file && file instanceof File) {
+  if (file && (typeof File !== 'undefined' ? file instanceof File : file.arrayBuffer)) {
     const arrayBuffer = await file.arrayBuffer();
     fileBuffer = new Uint8Array(arrayBuffer);
   }

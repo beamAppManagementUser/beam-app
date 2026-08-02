@@ -6,6 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./public",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
   "d1_databases": [
@@ -31,7 +32,7 @@
     }
   },
   "vars": {
-    "EMAIL_FROM_NAME": "Beam Veda"
+    "EMAIL_FROM_NAME": "Beam Veda Support"
   },
   "triggers": {
     "crons": ["0 4 * * *"]

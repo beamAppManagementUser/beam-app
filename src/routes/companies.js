@@ -71,8 +71,13 @@ companies.put('/mine/logo', requireAdmin, async (c) => {
   const { file } = await parseMultipart(c);
   if (!file) return c.json({ error: 'No logo file provided.' }, 400);
   const logoKey = `company-logos/${row.id}.jpg`;
-  await c.env.BUCKETS.put(logoKey, file, { httpMetadata: { contentType: 'image/jpeg' } });
-  await c.env.DB.prepare('UPDATE companies SET logo_path = ? WHERE id = ?').bind(logoKey, row.id).run();
+  try {
+    await c.env.BUCKETS.put(logoKey, file, { httpMetadata: { contentType: 'image/jpeg' } });
+    await c.env.DB.prepare('UPDATE companies SET logo_path = ? WHERE id = ?').bind(logoKey, row.id).run();
+  } catch (e) {
+    console.error('Error saving logo:', e);
+    return c.json({ error: 'Failed to save logo.' }, 500);
+  }
   const updated = await c.env.DB.prepare('SELECT * FROM companies WHERE id = ?').bind(row.id).first();
   return c.json(companyPublic(updated));
 });
@@ -105,8 +110,8 @@ companies.post('/', requireRoot, async (c) => {
     'INSERT INTO companies (slug, name, contact, active, created_at, admin_default_lang, employee_default_lang) VALUES (?,?,?,1,?,?,?)'
   ).bind(slug, name.trim(), contact || '', now, adminLang, empLang).run();
   const companyId = info.meta.last_row_id;
-  await c.env.DB.prepare("INSERT INTO users (id, company_id, name, password_hash, role, active, is_root, created_at) VALUES (?,?,?,?,\'admin\',1,0,?)")
-    .bind(adminId.trim(), companyId, adminName.trim(), bcrypt.hashSync(adminPassword, 10), now).run();
+  await c.env.DB.prepare('INSERT INTO users (id, company_id, name, password_hash, role, active, is_root, created_at) VALUES (?,?,?,?,?,1,0,?)')
+    .bind(adminId.trim(), companyId, adminName.trim(), bcrypt.hashSync(adminPassword, 10), 'admin', now).run();
   const eligibleFields = [
     ['customer_number', 'Customer Number'], ['party_name', 'Party Name'], ['pipe_number', 'Pipe Number'],
     ['pipe_size', 'Pipe Size'], ['inward_vehicle_reg', 'Inward Vehicle Reg'], ['outward_vehicle_reg', 'Outward Vehicle Reg'],
@@ -144,8 +149,13 @@ companies.put('/:id/logo', requireRoot, async (c) => {
   const { file } = await parseMultipart(c);
   if (!file) return c.json({ error: 'No logo file provided.' }, 400);
   const logoKey = `company-logos/${row.id}.jpg`;
-  await c.env.BUCKETS.put(logoKey, file, { httpMetadata: { contentType: 'image/jpeg' } });
-  await c.env.DB.prepare('UPDATE companies SET logo_path = ? WHERE id = ?').bind(logoKey, row.id).run();
+  try {
+    await c.env.BUCKETS.put(logoKey, file, { httpMetadata: { contentType: 'image/jpeg' } });
+    await c.env.DB.prepare('UPDATE companies SET logo_path = ? WHERE id = ?').bind(logoKey, row.id).run();
+  } catch (e) {
+    console.error('Error saving logo:', e);
+    return c.json({ error: 'Failed to save logo.' }, 500);
+  }
   const updated = await c.env.DB.prepare('SELECT * FROM companies WHERE id = ?').bind(row.id).first();
   return c.json(companyPublic(updated));
 });
@@ -174,9 +184,20 @@ companies.delete('/:id', requireRoot, async (c) => {
   const inwardIds = (await c.env.DB.prepare('SELECT id FROM inward_entries WHERE company_id = ?').bind(row.id).all()).results || [];
   const outwardIds = (await c.env.DB.prepare('SELECT id FROM outward_shipments WHERE company_id = ?').bind(row.id).all()).results || [];
   for (const r of [...inwardIds, ...outwardIds]) {
-    await deletePhoto(c.env, r.id);
+    try {
+      await deletePhoto(c.env, r.id);
+    } catch (e) {
+      console.error('Failed to delete photo for id', r.id, e);
+      // continue with deletion of db records even if photo deletion fails
+    }
   }
-  if (row.logo_path) await c.env.BUCKETS.delete(row.logo_path);
+  if (row.logo_path) {
+    try {
+      await c.env.BUCKETS.delete(row.logo_path);
+    } catch (e) {
+      console.error('Failed to delete logo from bucket:', e);
+    }
+  }
   await c.env.DB.prepare('DELETE FROM companies WHERE id = ?').bind(row.id).run();
   return c.json({ ok: true });
 });
