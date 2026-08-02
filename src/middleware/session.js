@@ -40,18 +40,52 @@ export async function destroySession(env, sessionId) {
 }
 
 export function getSessionIdFromRequest(c) {
-  const cookie = c.req.header('cookie') || '';
+  // Hono: use header() accessor; guard if not available
+  const cookieHeader = (c.req && typeof c.req.header === 'function') ? c.req.header('cookie') : (c.request && c.request.headers.get('cookie'));
+  const cookie = cookieHeader || '';
   const match = cookie.match(/sid=([^;]+)/);
   if (match) return match[1];
   return null;
 }
 
-export function setSessionCookie(c, sessionId) {
-  c.header('Set-Cookie', `sid=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`);
+export function setSessionCookie(c, sessionId, { secure = true, path = '/' } = {}) {
+  const cookie = `sid=${sessionId}; Path=${path}; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secure ? '; Secure' : ''}`;
+  // Prefer appending Set-Cookie to avoid overwriting other cookies;
+  // If Hono response headers support append, use that; otherwise fallback to header().
+  try {
+    if (c.res && c.res.headers && typeof c.res.headers.append === 'function') {
+      c.res.headers.append('Set-Cookie', cookie);
+    } else if (typeof c.header === 'function') {
+      c.header('Set-Cookie', cookie);
+    } else if (c.response && c.response.headers && typeof c.response.headers.append === 'function') {
+      c.response.headers.append('Set-Cookie', cookie);
+    } else {
+      // Best effort: set on c.get/set pattern if available
+      // (rare case; most environments above will work)
+      console.warn('Could not append Set-Cookie header using known API; cookie may overwrite previous values.');
+      if (typeof c.header === 'function') c.header('Set-Cookie', cookie);
+    }
+  } catch (e) {
+    // Do not throw from cookie setter; log and continue
+    console.error('setSessionCookie error:', e);
+  }
 }
 
-export function clearSessionCookie(c) {
-  c.header('Set-Cookie', 'sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+export function clearSessionCookie(c, { path = '/' } = {}) {
+  const cookie = `sid=; Path=${path}; HttpOnly; SameSite=Lax; Max-Age=0`;
+  try {
+    if (c.res && c.res.headers && typeof c.res.headers.append === 'function') {
+      c.res.headers.append('Set-Cookie', cookie);
+    } else if (typeof c.header === 'function') {
+      c.header('Set-Cookie', cookie);
+    } else if (c.response && c.response.headers && typeof c.response.headers.append === 'function') {
+      c.response.headers.append('Set-Cookie', cookie);
+    } else {
+      if (typeof c.header === 'function') c.header('Set-Cookie', cookie);
+    }
+  } catch (e) {
+    console.error('clearSessionCookie error:', e);
+  }
 }
 
 export async function cleanupExpiredSessions(env) {
