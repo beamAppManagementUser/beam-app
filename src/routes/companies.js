@@ -105,8 +105,8 @@ companies.post('/', requireRoot, async (c) => {
     'INSERT INTO companies (slug, name, contact, active, created_at, admin_default_lang, employee_default_lang) VALUES (?,?,?,1,?,?,?)'
   ).bind(slug, name.trim(), contact || '', now, adminLang, empLang).run();
   const companyId = info.meta.last_row_id;
-  await c.env.DB.prepare("INSERT INTO users (id, company_id, name, password_hash, role, active, is_root, created_at) VALUES (?,?,?,?,\'admin\',1,0,?)")
-    .bind(adminId.trim(), companyId, adminName.trim(), bcrypt.hashSync(adminPassword, 10), now).run();
+  await c.env.DB.prepare('INSERT INTO users (id, company_id, name, password_hash, role, active, is_root, created_at) VALUES (?,?,?,?,?,1,0,?)')
+    .bind(adminId.trim(), companyId, adminName.trim(), bcrypt.hashSync(adminPassword, 10), 'admin', now).run();
   const eligibleFields = [
     ['customer_number', 'Customer Number'], ['party_name', 'Party Name'], ['pipe_number', 'Pipe Number'],
     ['pipe_size', 'Pipe Size'], ['inward_vehicle_reg', 'Inward Vehicle Reg'], ['outward_vehicle_reg', 'Outward Vehicle Reg'],
