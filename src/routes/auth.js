@@ -2,7 +2,7 @@
 import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import { requireLogin } from '../middleware/auth.js';
-import { createSession, destroySession, getSession, getSessionIdFromRequest, setSessionCookie, clearSessionCookie, updateSession } from '../middleware/session.js';
+import { createSession, destroySession, getSessionIdFromRequest, setSessionCookie, clearSessionCookie, updateSession } from '../middleware/session.js';
 import { getEffectiveLanguage } from '../utils/languages.js';
 
 const auth = new Hono();
