@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beam Stock Management V2 — Page Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0EC; --surface:#FFFFFF; --ink:#1B2430;
+  --steel:#3F5266; --steel-light:#7C8FA0;
+  --accent:#D2691E; --accent-dark:#A8541A;
+  --line:#DBDFE1; --success:#2F7D52; --success-bg:#E7F3EC;
+  --danger:#B3402F; --danger-bg:#FBEBE7; --warning:#B4860B; --warning-bg:#FBF3DC;
+  --radius:6px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.45;min-height:100vh;}
+h1,h2,h3,h4,.display{font-family:'Barlow Condensed',system-ui,sans-serif;font-weight:700;letter-spacing:.02em;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:14px;}
+a{color:var(--accent-dark);}
+
+.app-header{background:var(--surface);border-bottom:1px solid var(--line);}
+.header-top{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;}
+.brand-logo{width:52px;height:52px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--steel);overflow:hidden;}
+.brand-logo img{width:100%;height:100%;object-fit:cover;}
+.brand-name{font-size:26px;line-height:1;color:var(--ink);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.brand-sub{font-size:11px;color:var(--steel-light);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.contact-block{text-align:right;font-size:12.5px;color:var(--steel);line-height:1.5;white-space:pre-line;}
+.title-strip{background:var(--ink);color:#fff;position:relative;overflow:hidden;}
+.title-strip-inner{max-width:1200px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.page-title{font-size:20px;text-transform:uppercase;letter-spacing:.12em;color:#fff;margin:0;}
+.tape{height:6px;width:100%;background-image:repeating-linear-gradient(90deg,var(--accent) 0 2px, transparent 2px 12px);opacity:.9;}
+.session-box{display:flex;align-items:center;gap:10px;font-size:12.5px;color:#D8DEE4;flex-wrap:wrap;}
+.session-box b{color:#fff;}
+.lang-toggle{display:flex;border:1px solid #4A5A6C;border-radius:20px;overflow:hidden;}
+.lang-toggle button{background:transparent;border:none;color:#D8DEE4;padding:4px 12px;font-size:12px;font-weight:600;}
+.lang-toggle button.active{background:var(--accent);color:#fff;}
+
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:var(--radius);font-size:13px;font-weight:600;transition:.12s ease;white-space:nowrap;}
+.btn:hover{border-color:var(--steel-light);}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-accent:hover{background:var(--accent-dark);border-color:var(--accent-dark);}
+.btn-steel{background:var(--steel);border-color:var(--steel);color:#fff;}
+.btn-danger{background:var(--danger-bg);border-color:var(--danger);color:var(--danger);}
+.btn-danger:hover{background:var(--danger);color:#fff;}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--steel);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+.shell{max-width:1200px;margin:0 auto;padding:20px;}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:18px;border-bottom:2px solid var(--line);}
+.tab-btn{background:transparent;border:none;padding:10px 16px;font-family:'Barlow Condensed';font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--steel-light);border-bottom:3px solid transparent;margin-bottom:-2px;font-weight:600;}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--accent);}
+.tab-btn:hover{color:var(--ink);}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+.card h3{margin:0 0 14px;font-size:19px;text-transform:uppercase;letter-spacing:.04em;color:var(--steel);}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 16px;}
+.field label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--steel-light);font-weight:600;margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius);background:#fbfbfa;color:var(--ink);}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+.row-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.banner{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:14px;}
+.banner-success{background:var(--success-bg);color:var(--success);}
+.banner-error{background:var(--danger-bg);color:var(--danger);}
+.banner-warn{background:var(--warning-bg);color:var(--warning);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;font-family:'Barlow Condensed';font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--steel-light);border-bottom:2px solid var(--line);padding:8px 8px;white-space:nowrap;}
+tbody td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+tbody tr:hover{background:#FAFAF8;}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.pill-open{background:var(--warning-bg);color:var(--warning);}
+.pill-partial{background:#FBE9DC;color:var(--accent-dark);}
+.pill-closed{background:var(--success-bg);color:var(--success);}
+.thumb{width:34px;height:34px;border-radius:4px;object-fit:cover;border:1px solid var(--line);cursor:pointer;background:var(--line);}
+.table-wrap{overflow-x:auto;}
+.pager{display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px;}
+.pager-left{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--steel);}
+.pager-right{display:flex;align-items:center;gap:6px;}
+
+.login-wrap{display:flex;justify-content:center;padding:60px 20px;}
+.login-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:32px;max-width:380px;width:100%;box-shadow:0 6px 24px rgba(20,30,40,.06);}
+.login-card h2{margin:0 0 4px;font-size:24px;text-transform:uppercase;color:var(--ink);}
+.login-card p.sub{color:var(--steel-light);font-size:12.5px;margin:0 0 20px;}
+.pipe-mark{width:46px;height:46px;margin:0 auto 14px;display:block;}
+
+.modal-bg{position:relative;background:rgba(20,25,32,.5);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;border-radius:8px;}
+.modal{background:#fff;border-radius:8px;max-width:640px;width:100%;padding:22px;}
+.modal h3{margin-top:0;}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--steel-light);}
+.lookup-list{list-style:none;padding:0;margin:0;}
+.lookup-list li{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.stat-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;}
+.stat-box .num{font-family:'Barlow Condensed';font-size:30px;color:var(--ink);line-height:1;}
+.stat-box .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--steel-light);margin-top:4px;}
+.checkbox-row{display:flex;align-items:center;gap:8px;}
+.checkbox-row input{width:auto;}
+.helper{font-size:11.5px;color:var(--steel-light);margin-top:4px;}
+.app-footer{max-width:1200px;margin:0 auto;padding:18px 20px 40px;font-size:11.5px;color:var(--steel-light);text-align:center;}
+
+/* ---- Preview-only navigator (not part of the real app) ---- */
+.preview-nav{position:sticky;top:0;z-index:100;background:var(--ink);padding:10px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.preview-nav b{color:#fff;font-family:'Barlow Condensed';font-size:15px;letter-spacing:.06em;text-transform:uppercase;margin-right:10px;}
+.preview-nav button{background:#2B3644;border:1px solid #45566B;color:#C7D0D9;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+.preview-nav button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.preview-nav button:hover{border-color:var(--accent);}
+.screen{display:none;}
+.screen.active{display:block;}
+.preview-note{background:#FBF3DC;color:var(--warning);text-align:center;font-size:12px;padding:6px;font-weight:600;}
+
+@media (max-width:640px){
+  .brand-name{font-size:20px;}
+  .contact-block{text-align:left;}
+  .header-top{flex-direction:column;align-items:flex-start;}
+  .page-title{font-size:16px;}
+  table thead{display:none;}
+  tbody tr{display:block;border-bottom:2px solid var(--line);padding:8px 0;}
+  tbody td{display:flex;justify-content:space-between;gap:10px;border-bottom:none;padding:4px 4px;text-align:right;}
+  tbody td::before{content:attr(data-label);font-weight:600;color:var(--steel-light);text-align:left;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;}
+}
+</style>
+</head>
+<body>
+
+<div class="preview-note">STATIC PREVIEW — sample data only, no live server. Click the buttons below to switch pages.</div>
+<div class="preview-nav" id="nav"></div>
+
+<!-- ============ LOGIN ============ -->
+<div class="screen active" data-screen="login">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1></div></div>
+  <div class="shell">
+    <div class="login-wrap"><div class="login-card">
+      <svg class="pipe-mark" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" stroke="#3F5266" stroke-width="3"/><circle cx="24" cy="24" r="13" stroke="#D2691E" stroke-width="3"/><circle cx="24" cy="24" r="4.5" fill="#3F5266"/></svg>
+      <h2>Sign in</h2><p class="sub">Enter your user ID and password to continue.</p>
+      <div class="field" style="margin-bottom:12px;"><label>User ID</label><input type="text" value="madhur"></div>
+      <div class="field" style="margin-bottom:18px;"><label>Password</label><input type="password" value="••••••••••"></div>
+      <button class="btn btn-accent" style="width:100%;padding:11px;">Log in</button>
+      <p style="text-align:center;margin-top:14px;"><a href="#">Forgot password?</a></p>
+      <p class="helper" style="margin-top:16px;">Sessions are not stored on this device — you'll need to sign in again after a page refresh.</p>
+    </div></div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ EMPLOYEE: INWARD ============ -->
+<div class="screen" data-screen="emp-inward">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner">
+    <h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Madhur &middot; <b>Employee</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn active">Inward</button><button class="tab-btn">Outward</button></div>
+    <div class="card">
+      <h3>New Inward Entry</h3>
+      <div class="grid">
+        <div class="field"><label>Customer Number</label><input type="text" value="CUST-1042"></div>
+        <div class="field"><label>Party Name</label><input type="text" value="Shree Balaji Traders"></div>
+        <div class="field"><label>Pipe Number <span class="helper" style="display:inline;">(optional)</span></label><input type="text" value=""></div>
+        <div class="field"><label>Number of Pipes</label><input type="number" value="480"></div>
+        <div class="field"><label>Pipe Size</label><input type="text" value="6 inch"></div>
+        <div class="field"><label>Inward Date</label><input type="date" value="2026-07-29"></div>
+        <div class="field"><label>Inward Vehicle Reg</label><input type="text" value="MH-15-CX-7723"></div>
+        <div class="field"><label>Photo</label><input type="file"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea rows="2">Batch arrived slightly early, quality checked at gate.</textarea></div>
+      </div>
+      <div class="row-actions"><button class="btn btn-accent">Save Entry</button><button class="btn btn-ghost">Clear</button></div>
+      <p class="helper">Outward shipments (including split shipments) are recorded later from the Outward tab.</p>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ EMPLOYEE: OUTWARD ============ -->
+<div class="screen" data-screen="emp-outward">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner">
+    <h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Madhur &middot; <b>Employee</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn active">Outward</button></div>
+    <div class="card">
+      <h3>Outward — Pending Shipment <span style="color:var(--steel-light);font-size:14px;">(4 open)</span></h3>
+      <div class="row-actions" style="margin-top:0;"><input type="text" placeholder="Search customer, party, pipe #, vehicle..." style="max-width:280px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;"><button class="btn btn-sm">Search</button></div>
+      <div class="table-wrap" style="margin-top:12px;"><table>
+        <thead><tr><th>Customer #</th><th>Party</th><th>Pipe #</th><th>Inward Qty</th><th>Shipped Qty</th><th>Remaining Qty</th><th>Size</th><th>Inward Date</th><th>Photo</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Customer #">CUST-1042</td><td data-label="Party">Shree Balaji Traders</td><td data-label="Pipe #" class="mono">—</td><td data-label="Inward Qty">480</td><td data-label="Shipped Qty">0</td><td data-label="Remaining Qty"><b>480</b></td><td data-label="Size">6 inch</td><td data-label="Inward Date">29/07/2026</td><td data-label="Photo"><span class="thumb"></span></td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (0)</button></td></tr>
+          <tr><td data-label="Customer #">CUST-0998</td><td data-label="Party">Om Sai Steel Corp</td><td data-label="Pipe #" class="mono">PB-4471</td><td data-label="Inward Qty">600</td><td data-label="Shipped Qty">350</td><td data-label="Remaining Qty"><b>250</b></td><td data-label="Size">8 inch</td><td data-label="Inward Date">24/07/2026</td><td data-label="Photo"><span class="thumb"></span></td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (•)</button></td></tr>
+          <tr><td data-label="Customer #">CUST-1101</td><td data-label="Party">Krishna Pipe Distributors</td><td data-label="Pipe #" class="mono">PB-4488</td><td data-label="Inward Qty">300</td><td data-label="Shipped Qty">0</td><td data-label="Remaining Qty"><b>300</b></td><td data-label="Size">4 inch</td><td data-label="Inward Date">22/07/2026</td><td data-label="Photo">—</td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (0)</button></td></tr>
+          <tr><td data-label="Customer #">CUST-0876</td><td data-label="Party">Ganesh Enterprises</td><td data-label="Pipe #" class="mono">—</td><td data-label="Inward Qty">150</td><td data-label="Shipped Qty">100</td><td data-label="Remaining Qty"><b>50</b></td><td data-label="Size">10 inch</td><td data-label="Inward Date">18/07/2026</td><td data-label="Photo"><span class="thumb"></span></td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (•)</button></td></tr>
+        </tbody>
+      </table></div>
+      <div class="pager"><div class="pager-left">Show <select><option>10</option></select> records per page &middot; 4 total</div>
+        <div class="pager-right"><button class="btn btn-sm" disabled>&larr; Prev</button><span style="font-size:12.5px;">Page 1 / 1</span><button class="btn btn-sm" disabled>Next &rarr;</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ SHIP OUT MODAL EXAMPLE ============ -->
+<div class="screen" data-screen="ship-out-modal">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Madhur &middot; <b>Employee</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <p class="helper" style="margin-bottom:10px;">This is what appears after clicking <b>"Ship Out"</b> on the row for Om Sai Steel Corp (600 inward, 350 already shipped, 250 remaining):</p>
+    <div class="modal-bg"><div class="modal">
+      <h3>Record an Outward Shipment</h3>
+      <p class="helper">Remaining balance: <b>250</b></p>
+      <div class="grid">
+        <div class="field"><label>Pipe Number <span class="helper" style="display:inline;">(optional)</span></label><input type="text" value="PB-4471-B"></div>
+        <div class="field"><label>Outward Qty</label><input type="number" value="150" max="250"></div>
+        <div class="field"><label>Outward Date</label><input type="date" value="2026-07-30"></div>
+        <div class="field"><label>Outward Vehicle Reg</label><input type="text" value="MH-15-DK-2290"></div>
+        <div class="field"><label>Photo</label><input type="file"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea rows="2">Second of three planned split shipments for this order.</textarea></div>
+      </div>
+      <div class="row-actions"><button class="btn btn-accent">Save</button><button class="btn btn-ghost">Cancel</button></div>
+    </div></div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ VIEW SHIPMENTS MODAL EXAMPLE ============ -->
+<div class="screen" data-screen="view-shipments-modal">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <p class="helper" style="margin-bottom:10px;">This is what appears after clicking <b>"View Shipments"</b> — logged in as Admin, so Edit/Delete are visible per shipment (an Employee would see this same list without those two buttons):</p>
+    <div class="modal-bg"><div class="modal" style="max-width:760px;">
+      <h3>Shipments for: CUST-0998 / PB-4471</h3>
+      <p class="helper">Inward Qty: 600 &middot; Shipped Qty: 350 &middot; Remaining Qty: <b>250</b> &middot; <span class="pill pill-partial">Partial</span></p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pipe #</th><th>Qty</th><th>Outward Date</th><th>Outward Vehicle</th><th>Notes</th><th>Photo</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Pipe #" class="mono">PB-4471-A</td><td data-label="Qty">200</td><td data-label="Outward Date">26/07/2026</td><td data-label="Outward Vehicle">MH-15-DK-1187</td><td data-label="Notes">First split shipment</td><td data-label="Photo"><span class="thumb"></span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+          <tr><td data-label="Pipe #" class="mono">PB-4471-B</td><td data-label="Qty">150</td><td data-label="Outward Date">30/07/2026</td><td data-label="Outward Vehicle">MH-15-DK-2290</td><td data-label="Notes">Second of three planned split shipments</td><td data-label="Photo"><span class="thumb"></span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+        </tbody>
+      </table></div>
+      <div class="row-actions"><button class="btn">Cancel</button></div>
+    </div></div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: ALL RECORDS ============ -->
+<div class="screen" data-screen="admin-records">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn active">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Company Info</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>All Records</h3>
+      <div class="grid" style="margin-bottom:12px;">
+        <div class="field"><label>Status</label><select><option>All</option><option>Open</option><option>Partial</option><option>Closed</option></select></div>
+        <div class="field"><label>Party contains</label><input type="text"></div>
+        <div class="field"><label>Pipe # contains</label><input type="text"></div>
+        <div class="field"><label>Customer # contains</label><input type="text"></div>
+        <div class="field"><label>Inward from</label><input type="date"></div>
+        <div class="field"><label>Inward to</label><input type="date"></div>
+      </div>
+      <div class="row-actions" style="margin-top:0;margin-bottom:14px;"><button class="btn btn-accent">Apply Filters</button><button class="btn btn-ghost">Clear</button></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Customer #</th><th>Party</th><th>Pipe #</th><th>Inward Qty</th><th>Shipped Qty</th><th>Remaining Qty</th><th>Size</th><th>Inward</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Customer #">CUST-0998</td><td data-label="Party">Om Sai Steel Corp</td><td data-label="Pipe #" class="mono">PB-4471</td><td data-label="Inward Qty">600</td><td data-label="Shipped Qty">350</td><td data-label="Remaining Qty">250</td><td data-label="Size">8 inch</td><td data-label="Inward">24/07/2026 / MH-15-CX-4410</td><td data-label="Status"><span class="pill pill-partial">Partial</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm">View Shipments</button> <button class="btn btn-sm">History</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+          <tr><td data-label="Customer #">CUST-0754</td><td data-label="Party">Anand Pipe House</td><td data-label="Pipe #" class="mono">—</td><td data-label="Inward Qty">220</td><td data-label="Shipped Qty">220</td><td data-label="Remaining Qty">0</td><td data-label="Size">6 inch</td><td data-label="Inward">10/07/2026 / MH-12-AB-3456</td><td data-label="Status"><span class="pill pill-closed">Closed</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm">View Shipments</button> <button class="btn btn-sm">History</button> <button class="btn btn-sm btn-danger" disabled title="Has shipments">Delete</button></td></tr>
+          <tr><td data-label="Customer #">CUST-1101</td><td data-label="Party">Krishna Pipe Distributors</td><td data-label="Pipe #" class="mono">PB-4488</td><td data-label="Inward Qty">300</td><td data-label="Shipped Qty">0</td><td data-label="Remaining Qty">300</td><td data-label="Size">4 inch</td><td data-label="Inward">22/07/2026 / MH-15-CX-9012</td><td data-label="Status"><span class="pill pill-open">Open</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm">View Shipments</button> <button class="btn btn-sm">History</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+        </tbody>
+      </table></div>
+      <p class="helper">3 / 3 inward entrie(s) shown.</p>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: REPORTS ============ -->
+<div class="screen" data-screen="admin-reports">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn active">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Company Info</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>Reports</h3>
+      <div class="grid" style="margin-bottom:10px;">
+        <div class="field"><label>Inward from</label><input type="date" value="2026-07-01"></div>
+        <div class="field"><label>Inward to</label><input type="date" value="2026-07-30"></div>
+        <div class="field"><label>Status</label><select><option>All</option></select></div>
+      </div>
+      <div class="row-actions" style="margin-top:0;"><button class="btn btn-accent">Generate</button><button class="btn">Export CSV</button></div>
+      <div style="margin-top:16px;">
+        <div class="stat-grid">
+          <div class="stat-box"><div class="num">3</div><div class="lbl">Inward entrie(s) shown</div></div>
+          <div class="stat-box"><div class="num">1,120</div><div class="lbl">Total Pipes (Inward)</div></div>
+          <div class="stat-box"><div class="num">570</div><div class="lbl">Total Pipes (Shipped)</div></div>
+          <div class="stat-box"><div class="num">1</div><div class="lbl">Open</div></div>
+          <div class="stat-box"><div class="num">1</div><div class="lbl">Partial</div></div>
+          <div class="stat-box"><div class="num">1</div><div class="lbl">Closed</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;background:#FAFAF8;">
+        <h3 style="font-size:16px;">Email Report</h3>
+        <div class="field" style="max-width:420px;"><label>Recipient emails</label><input type="text" value="owner@jainwraptech.com"></div>
+        <div class="row-actions"><button class="btn btn-steel">Send</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: LOOKUPS ============ -->
+<div class="screen" data-screen="admin-lookups">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn active">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Company Info</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>Party Name</h3>
+      <div class="checkbox-row" style="margin-bottom:14px;"><input type="checkbox" checked><label style="margin:0;text-transform:none;font-weight:500;color:var(--ink);">Use a dropdown instead of free text</label></div>
+      <div class="row-actions" style="margin-top:0;"><input type="text" placeholder="Add a value" style="max-width:260px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;"><button class="btn btn-accent btn-sm">Add</button></div>
+      <ul class="lookup-list" style="margin-top:12px;">
+        <li>Om Sai Steel Corp <button class="btn btn-sm btn-danger">Remove</button></li>
+        <li>Shree Balaji Traders <button class="btn btn-sm btn-danger">Remove</button></li>
+        <li>Krishna Pipe Distributors <button class="btn btn-sm btn-danger">Remove</button></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Pipe Number</h3>
+      <p class="helper" style="margin-top:-8px;margin-bottom:10px;">Shared between the Inward and Outward forms.</p>
+      <div class="checkbox-row" style="margin-bottom:14px;"><input type="checkbox"><label style="margin:0;text-transform:none;font-weight:500;color:var(--ink);">Use a dropdown instead of free text</label></div>
+      <div class="row-actions" style="margin-top:0;"><input type="text" placeholder="Add a value" style="max-width:260px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;"><button class="btn btn-accent btn-sm">Add</button></div>
+      <ul class="lookup-list" style="margin-top:12px;"><li style="color:var(--steel-light);">No values added yet — currently free text.</li></ul>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: USERS ============ -->
+<div class="screen" data-screen="admin-users">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn active">Users</button><button class="tab-btn">Company Info</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>Add User</h3>
+      <div class="grid">
+        <div class="field"><label>User ID</label><input type="text" placeholder="e.g. suresh"></div>
+        <div class="field"><label>Full Name</label><input type="text" placeholder="e.g. Suresh Kumar"></div>
+        <div class="field"><label>Set Password</label><input type="text"></div>
+        <div class="field"><label>Role</label><select><option>Employee</option><option>Admin</option></select></div>
+      </div>
+      <p class="helper">User IDs are not case-sensitive (e.g. "Suresh" and "suresh" are the same account).</p>
+      <div class="row-actions"><button class="btn btn-accent">Add User</button></div>
+    </div>
+    <div class="card">
+      <h3>Existing Users</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>User ID</th><th>Full Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="User ID" class="mono">Admin <span class="pill pill-open">Root</span></td><td data-label="Full Name">Administrator</td><td data-label="Role"><span class="pill pill-closed">Admin</span></td><td data-label="Status"><span class="pill pill-closed">Active</span></td><td data-label="Actions"><button class="btn btn-sm" disabled title="Only root can edit its own account">Edit</button></td></tr>
+          <tr><td data-label="User ID" class="mono">madhur</td><td data-label="Full Name">Madhur</td><td data-label="Role"><span class="pill pill-open">Employee</span></td><td data-label="Status"><span class="pill pill-closed">Active</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+          <tr><td data-label="User ID" class="mono">priya</td><td data-label="Full Name">Priya Sharma</td><td data-label="Role"><span class="pill pill-closed">Admin</span></td><td data-label="Status"><span class="pill pill-closed">Active</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: COMPANY INFO ============ -->
+<div class="screen" data-screen="admin-company">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn active">Company Info</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>Company Details</h3>
+      <div class="grid">
+        <div class="field"><label>Company Name</label><input type="text" value="Jain Wraptech"></div>
+        <div class="field"><label>Logo</label><input type="file"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Contact Details</label><textarea rows="3">Plot 14, MIDC Industrial Area, Nashik
++91 98765 43210</textarea></div>
+      </div>
+      <div class="row-actions"><button class="btn btn-accent">Save Company Details</button></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: HOUSEKEEPING ============ -->
+<div class="screen" data-screen="admin-housekeeping">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Company Info</button><button class="tab-btn active">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">86</div><div class="lbl">Total Records</div></div>
+      <div class="stat-box"><div class="num">61</div><div class="lbl">Closed Records</div></div>
+      <div class="stat-box"><div class="num">34</div><div class="lbl">Records with Photos</div></div>
+    </div>
+    <div class="card">
+      <h3>Clean Up Old Records</h3>
+      <p class="helper">Housekeeping only affects closed entries (fully shipped) whose most recent shipment date is before the cutoff.</p>
+      <div class="grid" style="max-width:320px;"><div class="field"><label>Cutoff: outward date before</label><input type="date" value="2026-01-01"></div></div>
+      <div class="row-actions"><button class="btn btn-steel">Clear Photos Only</button><button class="btn btn-danger">Delete Records Permanently</button></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ ADMIN: BACKUPS ============ -->
+<div class="screen" data-screen="admin-backups">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Jain Wraptech</div><div class="brand-sub">Beam Pipe Stock Register</div></div></div>
+    <div class="contact-block">Plot 14, MIDC Industrial Area, Nashik&#10;+91 98765 43210</div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>Admin &middot; <b>Admin</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Company Info</button><button class="tab-btn">Housekeeping</button><button class="tab-btn active">Backups</button></div>
+    <div class="card">
+      <h3>Backups</h3>
+      <p class="helper">A backup runs automatically every week. You can also trigger one manually below.</p>
+      <div class="row-actions" style="margin-top:0;"><button class="btn btn-accent">Run Backup Now</button><input type="number" placeholder="30" style="max-width:100px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;"><button class="btn btn-danger">Cleanup older than: Delete</button></div>
+      <div class="table-wrap" style="margin-top:12px;"><table>
+        <thead><tr><th>Backup File</th><th>Size</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Backup File" class="mono">beamstock_2026-07-27_020000.db</td><td data-label="Size">412.6 KB</td><td data-label="Created">27/07/2026, 02:00 AM</td><td data-label="Actions"><a class="btn btn-sm">Download</a> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+          <tr><td data-label="Backup File" class="mono">beamstock_2026-07-20_020000.db</td><td data-label="Size">398.1 KB</td><td data-label="Created">20/07/2026, 02:00 AM</td><td data-label="Actions"><a class="btn btn-sm">Download</a> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ MASTER: ROOT LOGIN ============ -->
+<div class="screen" data-screen="root-login">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Root Administration</div><div class="brand-sub">Sister Companies — System Administration</div></div></div>
+    <div class="contact-block"></div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div></div>
+  </div></div>
+  <div class="shell">
+    <p class="helper" style="margin-bottom:10px;">This is the fixed <span class="mono">/root-admin</span> login — visually distinct (no company branding), and notice there's no "Forgot password?" link, since root is intentionally excluded from that self-service flow.</p>
+    <div class="login-wrap"><div class="login-card">
+      <svg class="pipe-mark" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" stroke="#3F5266" stroke-width="3"/><circle cx="24" cy="24" r="13" stroke="#D2691E" stroke-width="3"/><circle cx="24" cy="24" r="4.5" fill="#3F5266"/></svg>
+      <h2>Sign in</h2><p class="sub">Enter your user ID and password to continue.</p>
+      <div class="field" style="margin-bottom:12px;"><label>User ID</label><input type="text" value="Admin"></div>
+      <div class="field" style="margin-bottom:18px;"><label>Password</label><input type="password" value="••••••••••"></div>
+      <button class="btn btn-accent" style="width:100%;padding:11px;">Log in</button>
+      <p class="helper" style="margin-top:16px;">Sessions are not stored on this device — you'll need to sign in again after a page refresh.</p>
+    </div></div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ MASTER: ROOT OUTWARD w/ COMPANY SWITCHER = ALL ============ -->
+<div class="screen" data-screen="root-outward-all">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Root Administration</div><div class="brand-sub">Sister Companies — System Administration</div></div></div>
+    <div class="contact-block"></div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>
+      <select style="padding:5px 8px;border-radius:4px;border:1px solid #4A5A6C;background:#1B2430;color:#fff;font-size:12.5px;">
+        <option selected>All Companies</option><option>Jain Wraptech</option><option>Om Sai Steel Corp</option><option>Krishna Pipe Distributors</option>
+      </select>
+      Admin &middot; <b>Root</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <p class="helper" style="margin-bottom:10px;">Root has selected <b>"All Companies"</b> in the switcher — notice the extra <b>Company</b> column, showing this Outward list now spans every sister company at once. Picking one specific company from that dropdown instead would filter this list down to just that company's data, exactly like a company admin's own view.</p>
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn active">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Companies</button><button class="tab-btn">My Account</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>Outward — Pending Shipment <span style="color:var(--steel-light);font-size:14px;">(3 open)</span></h3>
+      <div class="row-actions" style="margin-top:0;"><input type="text" placeholder="Search customer, party, pipe #, vehicle..." style="max-width:280px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;"><button class="btn btn-sm">Search</button></div>
+      <div class="table-wrap" style="margin-top:12px;"><table>
+        <thead><tr><th>Company</th><th>Customer #</th><th>Party</th><th>Pipe #</th><th>Inward Qty</th><th>Shipped Qty</th><th>Remaining Qty</th><th>Inward Date</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Company"><b>Jain Wraptech</b></td><td data-label="Customer #">CUST-1042</td><td data-label="Party">Shree Balaji Traders</td><td data-label="Pipe #" class="mono">—</td><td data-label="Inward Qty">480</td><td data-label="Shipped Qty">0</td><td data-label="Remaining Qty"><b>480</b></td><td data-label="Inward Date">29/07/2026</td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (0)</button></td></tr>
+          <tr><td data-label="Company"><b>Om Sai Steel Corp</b></td><td data-label="Customer #">CUST-2207</td><td data-label="Party">Vishwakarma Traders</td><td data-label="Pipe #" class="mono">PS-1120</td><td data-label="Inward Qty">900</td><td data-label="Shipped Qty">400</td><td data-label="Remaining Qty"><b>500</b></td><td data-label="Inward Date">21/07/2026</td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (•)</button></td></tr>
+          <tr><td data-label="Company"><b>Krishna Pipe Distributors</b></td><td data-label="Customer #">CUST-0509</td><td data-label="Party">Raghav Steel Traders</td><td data-label="Pipe #" class="mono">—</td><td data-label="Inward Qty">150</td><td data-label="Shipped Qty">0</td><td data-label="Remaining Qty"><b>150</b></td><td data-label="Inward Date">19/07/2026</td><td data-label="Actions"><button class="btn btn-sm btn-accent">Ship Out</button> <button class="btn btn-sm">View Shipments (0)</button></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ MASTER: ROOT COMPANIES TAB ============ -->
+<div class="screen" data-screen="root-companies">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Root Administration</div><div class="brand-sub">Sister Companies — System Administration</div></div></div>
+    <div class="contact-block"></div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>
+      <select style="padding:5px 8px;border-radius:4px;border:1px solid #4A5A6C;background:#1B2430;color:#fff;font-size:12.5px;"><option selected>All Companies</option></select>
+      Admin &middot; <b>Root</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn active">Companies</button><button class="tab-btn">My Account</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>Add a Sister Company</h3>
+      <div class="grid">
+        <div class="field"><label>Company Name</label><input type="text" placeholder="e.g. XYZ Steel Pvt Ltd"></div>
+        <div class="field"><label>Slug (URL)</label><input type="text" placeholder="auto from name, e.g. xyz-steel"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Contact Details</label><textarea rows="2"></textarea></div>
+        <div class="field"><label>First Admin's User ID</label><input type="text" placeholder="e.g. suresh"></div>
+        <div class="field"><label>First Admin's Name</label><input type="text" placeholder="e.g. Suresh Kumar"></div>
+        <div class="field"><label>First Admin's Password</label><input type="text"></div>
+      </div>
+      <p class="helper">Company link will be: yoursite.com/<span class="mono">slug</span></p>
+      <div class="row-actions"><button class="btn btn-accent">Create Company</button></div>
+    </div>
+    <div class="card">
+      <h3>Existing Companies</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Company Name</th><th>Slug</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Company Name">Jain Wraptech</td><td data-label="Slug" class="mono">/jain-wraptech</td><td data-label="Status"><span class="pill pill-closed">Active</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Deactivate</button> <button class="btn btn-sm btn-danger">Delete Permanently</button></td></tr>
+          <tr><td data-label="Company Name">Om Sai Steel Corp</td><td data-label="Slug" class="mono">/om-sai-steel</td><td data-label="Status"><span class="pill pill-closed">Active</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Deactivate</button> <button class="btn btn-sm btn-danger">Delete Permanently</button></td></tr>
+          <tr><td data-label="Company Name">Krishna Pipe Distributors</td><td data-label="Slug" class="mono">/krishna-pipe</td><td data-label="Status"><span class="pill pill-closed">Active</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Deactivate</button> <button class="btn btn-sm btn-danger">Delete Permanently</button></td></tr>
+          <tr><td data-label="Company Name">Ganesh Enterprises (old)</td><td data-label="Slug" class="mono">/ganesh-ent</td><td data-label="Status"><span class="pill" style="background:#eee;color:#888;">Disabled</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-steel">Reactivate</button> <button class="btn btn-sm btn-danger">Delete Permanently</button></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ MASTER: ROOT MY ACCOUNT TAB ============ -->
+<div class="screen" data-screen="root-myaccount">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Root Administration</div><div class="brand-sub">Sister Companies — System Administration</div></div></div>
+    <div class="contact-block"></div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>
+      <select style="padding:5px 8px;border-radius:4px;border:1px solid #4A5A6C;background:#1B2430;color:#fff;font-size:12.5px;"><option selected>All Companies</option></select>
+      Admin &middot; <b>Root</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Companies</button><button class="tab-btn active">My Account</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card">
+      <h3>My Profile</h3>
+      <div class="field" style="max-width:320px;"><label>Full Name</label><input type="text" value="Administrator"></div>
+      <div class="row-actions"><button class="btn btn-accent">Save Changes</button></div>
+    </div>
+    <div class="card">
+      <h3>Change My Password</h3>
+      <p class="helper">As the root account, you must answer your own security questions below to change your password — this protects the one account nobody else can reset.</p>
+      <div class="grid">
+        <div class="field"><label>What is your favourite colour?</label><input type="text"></div>
+        <div class="field"><label>What city were you born in?</label><input type="text"></div>
+        <div class="field"><label>New Password</label><input type="password"></div>
+      </div>
+      <div class="row-actions"><button class="btn btn-accent">Reset Password</button></div>
+    </div>
+    <div class="card">
+      <h3>My Security Questions</h3>
+      <p class="helper">Used to reset your own password if you ever get locked out or forget it. Only you can see or set these.</p>
+      <p class="helper">Security questions are set up.</p>
+      <div class="grid">
+        <div class="field"><label>Question 1</label><input type="text" value="What is your favourite colour?"></div>
+        <div class="field"><label>Answer 1</label><input type="text" placeholder="••••••"></div>
+        <div class="field"><label>Question 2</label><input type="text" value="What city were you born in?"></div>
+        <div class="field"><label>Answer 2</label><input type="text" placeholder="••••••"></div>
+      </div>
+      <div class="row-actions"><button class="btn btn-accent">Save Security Questions</button></div>
+    </div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<!-- ============ MASTER: ROOT EDITING A SINGLE RECORD WHILE "ALL" IS SELECTED ============ -->
+<div class="screen" data-screen="root-edit-from-all">
+  <div class="app-header"><div class="header-top">
+    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 48 48" width="30" height="30" fill="none"><circle cx="24" cy="24" r="20" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="12" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="#fff"/></svg></div>
+      <div><div class="brand-name">Root Administration</div><div class="brand-sub">Sister Companies — System Administration</div></div></div>
+    <div class="contact-block"></div>
+  </div></div>
+  <div class="tape"></div>
+  <div class="title-strip"><div class="title-strip-inner"><h1 class="page-title">Beam Stock Management</h1>
+    <div class="session-box"><div class="lang-toggle"><button class="active">EN</button><button>हिंदी</button></div>
+      <select style="padding:5px 8px;border-radius:4px;border:1px solid #4A5A6C;background:#1B2430;color:#fff;font-size:12.5px;"><option selected>All Companies</option><option>Jain Wraptech</option><option>Om Sai Steel Corp</option><option>Krishna Pipe Distributors</option></select>
+      Admin &middot; <b>Root</b><button class="btn btn-sm">Log out</button></div>
+  </div></div>
+  <div class="shell">
+    <p class="banner banner-warn" style="margin-bottom:10px;">Notice the switcher above still says <b>"All Companies"</b> — yet clicking Edit on the Om Sai Steel Corp row still opens and works normally. The switcher only controls what root <i>sees</i> in lists; it never blocks root from acting on a specific record it's already looking at, in any company.</p>
+    <div class="tabs"><button class="tab-btn">Inward</button><button class="tab-btn">Outward</button><button class="tab-btn active">All Records</button><button class="tab-btn">Reports</button><button class="tab-btn">Lookups</button><button class="tab-btn">Users</button><button class="tab-btn">Companies</button><button class="tab-btn">My Account</button><button class="tab-btn">Housekeeping</button><button class="tab-btn">Backups</button></div>
+    <div class="card" style="opacity:.55;">
+      <h3>All Records</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Company</th><th>Customer #</th><th>Party</th><th>Remaining Qty</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Company"><b>Jain Wraptech</b></td><td data-label="Customer #">CUST-1042</td><td data-label="Party">Shree Balaji Traders</td><td data-label="Remaining Qty">480</td><td data-label="Status"><span class="pill pill-open">Open</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+          <tr style="background:#FFF7EE;"><td data-label="Company"><b>Om Sai Steel Corp</b></td><td data-label="Customer #">CUST-0998</td><td data-label="Party">Om Sai Steel Corp</td><td data-label="Remaining Qty">250</td><td data-label="Status"><span class="pill pill-partial">Partial</span></td><td data-label="Actions"><button class="btn btn-sm">Edit ←</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+          <tr><td data-label="Company"><b>Krishna Pipe Distributors</b></td><td data-label="Customer #">CUST-0509</td><td data-label="Party">Raghav Steel Traders</td><td data-label="Remaining Qty">150</td><td data-label="Status"><span class="pill pill-open">Open</span></td><td data-label="Actions"><button class="btn btn-sm">Edit</button> <button class="btn btn-sm btn-danger">Delete</button></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="modal-bg"><div class="modal">
+      <h3>Edit — New Inward Entry <span class="pill pill-partial" style="margin-left:8px;">Om Sai Steel Corp</span></h3>
+      <p class="banner banner-warn">Already shipped against this entry: 350</p>
+      <div class="grid">
+        <div class="field"><label>Customer Number</label><input type="text" value="CUST-0998"></div>
+        <div class="field"><label>Party Name</label><input type="text" value="Om Sai Steel Corp"></div>
+        <div class="field"><label>Pipe Number</label><input type="text" value="PB-4471"></div>
+        <div class="field"><label>Number of Pipes</label><input type="number" value="600"></div>
+        <div class="field"><label>Pipe Size</label><input type="text" value="8 inch"></div>
+        <div class="field"><label>Inward Date</label><input type="date" value="2026-07-24"></div>
+        <div class="field"><label>Inward Vehicle Reg</label><input type="text" value="MH-15-CX-4410"></div>
+        <div class="field"><label>Replace Photo</label><input type="file"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea rows="2">Large order, three planned split shipments.</textarea></div>
+      </div>
+      <p class="helper">Created by suresh on 24/07/2026, 09:14 AM &middot; Last updated by suresh on 30/07/2026, 04:02 PM</p>
+      <div class="row-actions"><button class="btn btn-accent">Save Changes</button><button class="btn btn-ghost">Cancel</button></div>
+    </div></div>
+  </div>
+  <div class="app-footer">Beam Stock Management &middot; 2026</div>
+</div>
+
+<script>
+const screens = [
+  ['login','Login'],
+  ['emp-inward','Employee: Inward'],
+  ['emp-outward','Employee: Outward'],
+  ['ship-out-modal','↳ Ship Out modal'],
+  ['view-shipments-modal','↳ View Shipments modal'],
+  ['admin-records','Admin: All Records'],
+  ['admin-reports','Admin: Reports'],
+  ['admin-lookups','Admin: Lookups'],
+  ['admin-users','Admin: Users'],
+  ['admin-company','Admin: Company Info'],
+  ['admin-housekeeping','Admin: Housekeeping'],
+  ['admin-backups','Admin: Backups'],
+  ['root-login','★ Master: Root Login'],
+  ['root-outward-all','★ Master: Root Outward (All)'],
+  ['root-edit-from-all','★ Master: Edit works despite "All"'],
+  ['root-companies','★ Master: Companies tab'],
+  ['root-myaccount','★ Master: My Account (Root)'],
+];
+const nav = document.getElementById('nav');
+nav.innerHTML = '<b>Pages</b>' + screens.map(([id,label])=>`<button data-target="${id}">${label}</button>`).join('');
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.dataset.screen===id));
+  document.querySelectorAll('#nav button[data-target]').forEach(b=>b.classList.toggle('active', b.dataset.target===id));
+  window.scrollTo(0,0);
+}
+nav.querySelectorAll('button[data-target]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.target)));
+show('emp-inward');
+</script>
+</body>
+</html>
