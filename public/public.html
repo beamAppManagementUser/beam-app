@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beam Stock Management — Interactive Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Minimal subset of the sample UX styles for the interactive preview */
+    :root{--bg:#EEF0EC;--surface:#fff;--ink:#1B2430;--steel:#3F5266;--accent:#D2691E;--accent-dark:#A8541A;--line:#DBDFE1;--radius:6px}
+    body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);}
+    .header{background:var(--surface);border-bottom:1px solid var(--line);}
+    .header-inner{max-width:1100px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-logo{width:46px;height:46px;border-radius:6px;background:var(--steel);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .brand-text{display:flex;flex-direction:column}
+    .brand-name{font-weight:700;font-size:18px}
+    .brand-sub{font-size:11px;color:#7C8FA0}
+    .powered-badge{font-size:11px;color:#7C8FA0;border-left:1px solid var(--line);padding-left:10px;margin-left:8px}
+    .shell{max-width:1100px;margin:20px auto;padding:0 18px}
+    .card{background:var(--surface);padding:18px;border-radius:8px;border:1px solid var(--line)}
+    .login-form{max-width:420px;margin:30px auto}
+    .field{margin-bottom:12px}
+    input[type=text],input[type=password]{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px}
+    .btn{background:var(--accent);color:#fff;padding:10px 14px;border:none;border-radius:6px;cursor:pointer}
+    .hidden{display:none}
+    .inline{display:inline-block}
+    .backups-table{width:100%;border-collapse:collapse}
+    .backups-table th,.backups-table td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+    .note{font-size:13px;color:#7C8FA0}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="brand">
+          <div class="brand-logo">JW</div>
+          <div class="brand-text">
+            <div class="brand-name" id="companyName">Jain Wraptech</div>
+            <div class="brand-sub" id="companyContact">Plot 14, MIDC Industrial Area</div>
+          </div>
+          <div class="powered-badge">Powered by Beam Veda</div>
+        </div>
+      </div>
+      <div id="sessionActions">
+        <button id="logoutBtn" class="btn hidden">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div id="loginScreen" class="card login-form">
+      <h2>Sign in</h2>
+      <p class="note">Sign in with your company account</p>
+      <div class="field"><label>User ID</label><input id="inputId" type="text" /></div>
+      <div class="field"><label>Password</label><input id="inputPassword" type="password" /></div>
+      <div style="display:flex;gap:8px;align-items:center"><button id="loginBtn" class="btn">Log in</button><div id="loginMsg" style="color:#B3402F"></div></div>
+    </div>
+
+    <div id="appScreen" class="hidden">
+      <div class="card">
+        <h3>Backups</h3>
+        <p class="note">List of backups available for download (root only)</p>
+        <table class="backups-table" id="backupsTable"><thead><tr><th>File</th><th>Size</th><th>Created</th><th>Action</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <p style="margin-top:12px" class="note">Note: this page expects the API to be hosted on the same origin or the API origin to be added to ALLOWED_ORIGINS.</p>
+  </main>
+
+  <script>
+    async function apiFetch(path, opts = {}){
+      const base = '';
+      const res = await fetch(base + path, { ...opts, credentials: 'include' });
+      return res;
+    }
+
+    async function checkSession(){
+      try{
+        const r = await apiFetch('/api/auth/me');
+        if (r.status === 200){
+          const data = await r.json();
+          showApp(data);
+          return true;
+        }
+      }catch(e){ console.warn('auth check failed',e); }
+      showLogin();
+      return false;
+    }
+
+    function showLogin(){
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('logoutBtn').classList.add('hidden');
+    }
+
+    function showApp(session){
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.remove('hidden');
+      document.getElementById('logoutBtn').classList.remove('hidden');
+      if (session && session.name) document.getElementById('companyName').textContent = session.name;
+      loadBackups();
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async ()=>{
+      const id = document.getElementById('inputId').value;
+      const password = document.getElementById('inputPassword').value;
+      document.getElementById('loginMsg').textContent = '';
+      try{
+        const r = await apiFetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, password }) });
+        const j = await r.json();
+        if (r.status === 200) { showApp(j); }
+        else { document.getElementById('loginMsg').textContent = j.error || 'Login failed'; }
+      }catch(e){ document.getElementById('loginMsg').textContent = 'Network error'; }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+      try{
+        const r = await apiFetch('/api/auth/logout', { method: 'POST' });
+        await r.json();
+      }catch(e){}
+      showLogin();
+    });
+
+    async function loadBackups(){
+      const tbody = document.querySelector('#backupsTable tbody');
+      tbody.innerHTML = '';
+      try{
+        const r = await apiFetch('/api/backups');
+        if (r.status === 200){
+          const rows = await r.json();
+          rows.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="mono">${row.filename || ''}</td><td>${row.size || ''}</td><td>${row.created_at || ''}</td><td>${row.filename?`<a href="/api/backups/${encodeURIComponent(row.filename)}/download">Download</a>`:''}</td>`;
+            tbody.appendChild(tr);
+          });
+        } else {
+          const j = await r.json();
+          tbody.innerHTML = `<tr><td colspan="4">${j.error || 'Unable to load backups'}</td></tr>`;
+        }
+      }catch(e){ tbody.innerHTML = `<tr><td colspan="4">Network error</td></tr>`; }
+    }
+
+    // Boot
+    checkSession();
+  </script>
+</body>
+</html>
