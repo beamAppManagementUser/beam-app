@@ -1,123 +1,103 @@
-// Auth routes — replaces src/routes/auth.js
-import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
-import { requireLogin } from '../middleware/auth.js';
-import { createSession, destroySession, getSessionIdFromRequest, setSessionCookie, clearSessionCookie, updateSession } from '../middleware/session.js';
-import { getEffectiveLanguage } from '../utils/languages.js';
+import { createSession, destroySession, getSession, getSessionIdFromRequest, setSessionCookie, clearSessionCookie } from '../middleware/session.js';
 
-const auth = new Hono();
+// Configurable lockout policy
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
-const MAX_ATTEMPTS = 5;
-const LOCK_MINUTES = 15;
+export async function login(req, env, c) {
+  try {
+    const body = await req.json();
+    const username = (body.username || body.id || '').trim();
+    const password = body.password || '';
+    const companyId = body.company_id || null;
 
-function normalizeAnswer(a) {
-  return (a || '').trim().toLowerCase();
+    if (!username || !password) return new Response(JSON.stringify({ error: 'Missing credentials' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+
+    // Look up user (case-insensitive usernames in DB)
+    // allow root accounts (company_id IS NULL) or company-scoped users
+    let userRow;
+    if (companyId) {
+      userRow = await env.DB.prepare('SELECT * FROM users WHERE company_id = ? AND username = ? COLLATE NOCASE').bind(companyId, username).first();
+    }
+    if (!userRow) {
+      // fallback to global/root user if exists
+      userRow = await env.DB.prepare('SELECT * FROM users WHERE company_id IS NULL AND username = ? COLLATE NOCASE').bind(username).first();
+    }
+
+    if (!userRow) {
+      return new Response(JSON.stringify({ error: 'Invalid username or password' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Check lockout
+    if (userRow.locked_until) {
+      const lockedUntil = new Date(userRow.locked_until).getTime();
+      if (lockedUntil > Date.now()) {
+        return new Response(JSON.stringify({ error: 'Account locked. Try again later.' }), { status: 423, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
+    const match = await bcrypt.compare(password, userRow.password_hash || '');
+    if (!match) {
+      // Increment failed_attempts and possibly lock
+      const failed = (userRow.failed_attempts || 0) + 1;
+      let lockedUntil = null;
+      if (failed >= MAX_FAILED_ATTEMPTS) {
+        lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS).toISOString();
+      }
+      await env.DB.prepare('UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?').bind(failed, lockedUntil, userRow.id).run();
+
+      return new Response(JSON.stringify({ error: 'Invalid username or password' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Successful login: reset failed attempts
+    await env.DB.prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?').bind(userRow.id).run();
+
+    // Create a session
+    const sessionData = {
+      user: {
+        id: userRow.id,
+        username: userRow.username,
+        name: userRow.name || null,
+        company_id: userRow.company_id || null,
+        role: userRow.role || 'employee'
+      }
+    };
+
+    const sessionId = await createSession(env, sessionData);
+
+    // Set cookie
+    setSessionCookie(c, sessionId, env);
+
+    const responseBody = { id: userRow.id, username: userRow.username, name: userRow.name || null, company_id: userRow.company_id || null, role: userRow.role || 'employee' };
+    return new Response(JSON.stringify(responseBody), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('Login error', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
 }
 
-function sessionShape(user) {
-  return { pk: user.pk, id: user.id, name: user.name, role: user.role, isRoot: !!user.is_root, companyId: user.company_id || null, language: user.language || null };
+export async function logout(req, env, c) {
+  try {
+    const sessionId = getSessionIdFromRequest(c);
+    if (sessionId) await destroySession(env, sessionId);
+    clearSessionCookie(c, env);
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('Logout error', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
 }
 
-auth.post('/login', async (c) => {
-  const { id, password, companySlug } = await c.req.json();
-  if (!id || !password) return c.json({ error: 'User ID and password are required.' }, 400);
-  const env = c.env;
-  let companyId = null;
-  if (companySlug) {
-    const company = await env.DB.prepare('SELECT * FROM companies WHERE slug = ? COLLATE NOCASE').bind(companySlug.trim()).first();
-    if (!company || !company.active) return c.json({ error: 'Unknown or inactive company.' }, 404);
-    companyId = company.id;
+export async function me(req, env, c) {
+  try {
+    const sessionId = getSessionIdFromRequest(c);
+    if (!sessionId) return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    const session = await getSession(env, sessionId);
+    if (!session || !session.user) return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify(session.user), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('Me error', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
-  const user = companyId === null
-    ? await env.DB.prepare('SELECT * FROM users WHERE company_id IS NULL AND id = ?').bind(id.trim()).first()
-    : await env.DB.prepare('SELECT * FROM users WHERE company_id = ? AND id = ?').bind(companyId, id.trim()).first();
-  if (!user || !user.active) return c.json({ error: 'Unknown user ID, or account disabled.' }, 401);
-  if (user.locked_until && new Date(user.locked_until).getTime() > Date.now()) {
-    const mins = Math.ceil((new Date(user.locked_until).getTime() - Date.now()) / 60000);
-    return c.json({ error: `Account temporarily locked after repeated failed attempts. Try again in ${mins} minute(s).` }, 423);
-  }
-  const ok = bcrypt.compareSync(password, user.password_hash);
-  if (!ok) {
-    const attempts = (user.failed_attempts || 0) + 1;
-    if (attempts >= MAX_ATTEMPTS) {
-      const lockedUntil = new Date(Date.now() + LOCK_MINUTES * 60000).toISOString();
-      await env.DB.prepare('UPDATE users SET failed_attempts = 0, locked_until = ? WHERE pk = ?').bind(lockedUntil, user.pk).run();
-      return c.json({ error: `Too many failed attempts. Account locked for ${LOCK_MINUTES} minutes.` }, 423);
-    }
-    await env.DB.prepare('UPDATE users SET failed_attempts = ? WHERE pk = ?').bind(attempts, user.pk).run();
-    return c.json({ error: `Incorrect password. ${MAX_ATTEMPTS - attempts} attempt(s) left before lockout.` }, 401);
-  }
-  await env.DB.prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE pk = ?').bind(user.pk).run();
-  const sessionData = { user: sessionShape(user), selectedCompanyId: null };
-  const sessionId = await createSession(env, sessionData);
-  setSessionCookie(c, sessionId);
-  let company = null;
-  if (user.company_id) {
-    company = await env.DB.prepare('SELECT * FROM companies WHERE id = ?').bind(user.company_id).first();
-  }
-  const effectiveLang = getEffectiveLanguage(user, company);
-  return c.json({ ...sessionData.user, selectedCompanyId: null, language: effectiveLang });
-});
-
-auth.post('/logout', async (c) => {
-  const sessionId = getSessionIdFromRequest(c);
-  await destroySession(c.env, sessionId);
-  clearSessionCookie(c);
-  return c.json({ ok: true });
-});
-
-auth.get('/me', requireLogin, async (c) => {
-  const session = c.get('session');
-  return c.json({ ...session.user, selectedCompanyId: session.user.isRoot ? (session.selectedCompanyId ?? null) : undefined });
-});
-
-auth.get('/recovery/:companySlug/:id/questions', async (c) => {
-  const generic = { error: 'No security-question recovery is set up for this account. Contact another admin for a password reset.' };
-  const env = c.env;
-  const company = await env.DB.prepare('SELECT * FROM companies WHERE slug = ? COLLATE NOCASE').bind(c.req.param('companySlug').trim()).first();
-  if (!company || !company.active) return c.json(generic, 404);
-  const user = await env.DB.prepare('SELECT * FROM users WHERE company_id = ? AND id = ?').bind(company.id, c.req.param('id').trim()).first();
-  if (!user || !user.active || user.role !== 'admin' || user.is_root) return c.json(generic, 404);
-  const rec = await env.DB.prepare('SELECT * FROM admin_recovery WHERE user_pk = ?').bind(user.pk).first();
-  if (!rec) return c.json(generic, 404);
-  if (rec.locked_until && new Date(rec.locked_until).getTime() > Date.now()) {
-    const mins = Math.ceil((new Date(rec.locked_until).getTime() - Date.now()) / 60000);
-    return c.json({ error: `Too many incorrect answers. Try again in ${mins} minute(s).` }, 423);
-  }
-  return c.json({ question1: rec.question1, question2: rec.question2 });
-});
-
-auth.post('/recovery/:companySlug/:id/reset', async (c) => {
-  const { answer1, answer2, newPassword } = await c.req.json();
-  const generic = { error: 'No security-question recovery is set up for this account. Contact another admin for a password reset.' };
-  const env = c.env;
-  const company = await env.DB.prepare('SELECT * FROM companies WHERE slug = ? COLLATE NOCASE').bind(c.req.param('companySlug').trim()).first();
-  if (!company || !company.active) return c.json(generic, 404);
-  const user = await env.DB.prepare('SELECT * FROM users WHERE company_id = ? AND id = ?').bind(company.id, c.req.param('id').trim()).first();
-  if (!user || !user.active || user.role !== 'admin' || user.is_root) return c.json(generic, 404);
-  if (!newPassword || newPassword.length < 6) return c.json({ error: 'New password must be at least 6 characters.' }, 400);
-  const rec = await env.DB.prepare('SELECT * FROM admin_recovery WHERE user_pk = ?').bind(user.pk).first();
-  if (!rec) return c.json(generic, 404);
-  if (rec.locked_until && new Date(rec.locked_until).getTime() > Date.now()) {
-    const mins = Math.ceil((new Date(rec.locked_until).getTime() - Date.now()) / 60000);
-    return c.json({ error: `Too many incorrect answers. Try again in ${mins} minute(s).` }, 423);
-  }
-  const ok1 = bcrypt.compareSync(normalizeAnswer(answer1), rec.answer1_hash);
-  const ok2 = bcrypt.compareSync(normalizeAnswer(answer2), rec.answer2_hash);
-  if (!ok1 || !ok2) {
-    const attempts = (rec.failed_attempts || 0) + 1;
-    if (attempts >= MAX_ATTEMPTS) {
-      const lockedUntil = new Date(Date.now() + LOCK_MINUTES * 60000).toISOString();
-      await env.DB.prepare('UPDATE admin_recovery SET failed_attempts = 0, locked_until = ? WHERE user_pk = ?').bind(lockedUntil, user.pk).run();
-      return c.json({ error: `Too many incorrect answers. Locked for ${LOCK_MINUTES} minutes.` }, 423);
-    }
-    await env.DB.prepare('UPDATE admin_recovery SET failed_attempts = ? WHERE user_pk = ?').bind(attempts, user.pk).run();
-    return c.json({ error: `One or both answers are incorrect. ${MAX_ATTEMPTS - attempts} attempt(s) left before lockout.` }, 401);
-  }
-  await env.DB.prepare('UPDATE users SET password_hash = ?, failed_attempts = 0, locked_until = NULL WHERE pk = ?')
-    .bind(bcrypt.hashSync(newPassword, 10), user.pk).run();
-  await env.DB.prepare('UPDATE admin_recovery SET failed_attempts = 0, locked_until = NULL WHERE user_pk = ?').bind(user.pk).run();
-  return c.json({ ok: true });
-});
-
-export { auth as authRoutes };
+}
