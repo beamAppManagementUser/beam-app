@@ -1,3 +1,4 @@
+import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import { createSession, destroySession, getSession, getSessionIdFromRequest, setSessionCookie, clearSessionCookie } from '../middleware/session.js';
 
@@ -102,5 +103,19 @@ export async function me(req, env, c) {
   }
 }
 
-// Re-export routes as a single object for imports that expect `authRoutes`
-export const authRoutes = { login, logout, me };
+// Create a Hono app instance for auth routes
+const authRoutes = new Hono();
+
+authRoutes.post('/login', async (c) => {
+  return login(c.req, c.env, c);
+});
+
+authRoutes.post('/logout', async (c) => {
+  return logout(c.req, c.env, c);
+});
+
+authRoutes.get('/me', async (c) => {
+  return me(c.req, c.env, c);
+});
+
+export { authRoutes };
