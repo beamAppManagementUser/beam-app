@@ -101,3 +101,6 @@ export async function me(req, env, c) {
     return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
+
+// Re-export routes as a single object for imports that expect `authRoutes`
+export const authRoutes = { login, logout, me };
