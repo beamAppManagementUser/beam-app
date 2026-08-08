@@ -54,15 +54,19 @@ export async function login(req, env, c) {
     // Successful login: reset failed attempts
     await env.DB.prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?').bind(userRow.id).run();
 
-    // Create a session
+    // Create a session — normalize shape to match server expectations
     const sessionData = {
       user: {
+        pk: userRow.pk ?? null,
         id: userRow.id,
         username: userRow.username,
         name: userRow.name || null,
-        company_id: userRow.company_id || null,
-        role: userRow.role || 'employee'
-      }
+        companyId: userRow.company_id ?? null,
+        role: (userRow.role || 'employee').toString().toLowerCase(),
+        isRoot: !!userRow.is_root
+      },
+      // For root users, selectedCompanyId === null means "all companies"; UI can update later
+      selectedCompanyId: userRow.is_root ? null : (userRow.company_id ?? null)
     };
 
     const sessionId = await createSession(env, sessionData);
