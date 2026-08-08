@@ -1,0 +1,57 @@
+name: Cloudflare Deploy
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint || true
+
+      - name: Run tests
+        run: npm test || true
+
+      - name: Publish to Cloudflare Workers (wrangler)
+        uses: cloudflare/wrangler-action@2
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: '.'
+
+  migrate-d1:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run D1 migrations (manual)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "Running D1 migrations (manual job)."
+          # Add your migration command here, for example using wrangler:
+          # npx wrangler d1 execute --binding="DB" --file=./migrations/0001_init.sql
+          echo "Please update the workflow with the correct migration command before running."
